@@ -60,11 +60,19 @@ def main():
 
         # do not consider cards without pricings
         price = card['prices']['usd']
-        if price is None:
-            price = card['prices']['usd_foil']
-            if price is None:
-                continue
-        new_card['price'] = float(price)
+        price_foil = card['prices']['usd_foil']
+        price_low: float
+        if price is None and price_foil is not None:
+            price_low = float(price_foil)
+        elif price is not None and price_foil is None:
+            price_low = float(price)
+        elif price is not None and price_foil is not None:
+            price_low = float(price)
+            if float(price_foil) < price_low:
+                price_low = float(price_foil)
+        else:
+            continue
+        new_card['price'] = price_low
 
         rarity = card['rarity']
         if rarity == 'common':
