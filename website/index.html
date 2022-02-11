@@ -180,7 +180,7 @@
 
         var set_btn = document.createElement('a');
         set_btn.classList.add('btn', 'btn-primary');
-        set_btn.innerText = set;
+        set_btn.innerText = set.toUpperCase();
         set_btn.href = db[name].sets[set];
         set_div.appendChild(set_btn);
       });
