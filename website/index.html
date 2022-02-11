@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="css/spectre/spectre.min.css">
+    <link rel="stylesheet" href="css/spectre/spectre-exp.min.css">
+    <link rel="stylesheet" href="css/spectre/spectre-icons.min.css">
+  </head>
+
+  <body class="container">
+    <div class="navbar">
+      <section class="navbar-section">
+        <h1><a href="index.html">JANK!</a></h1>
+      </section>
+    </div>
+
+    <h1>The List</h1>
+    <p>
+      Below is the entire list of all JANK! legal cards along with their deck point value and available sets.
+    </p>
+
+    <div id="loader">
+      <p>Loading cards...</p>
+      <div class="loading"></div>
+    </div>
+    <ul class="pagination" id="pagination">
+      <li><a href="index.html?page=a">A</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=b">B</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=c">C</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=d">D</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=e">E</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=f">F</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=g">G</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=h">H</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=i">I</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=j">J</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=k">K</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=l">L</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=m">M</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=n">N</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=o">O</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=p">P</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=q">Q</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=r">R</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=s">S</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=t">T</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=u">U</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=v">V</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=w">W</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=x">X</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=y">Y</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=z">Z</a></li>
+    </ul>
+
+    <table id="cardTable" class="table table-striped table-hover">
+      <thead>
+        <tr><th>Name</th><th>Points</th><th>Available Sets</th></tr>
+      </thead>
+      <tbody id="cards"></tbody>
+    </table>
+
+    <ul class="pagination" id="pagination">
+      <li><a href="index.html?page=a">A</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=b">B</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=c">C</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=d">D</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=e">E</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=f">F</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=g">G</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=h">H</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=i">I</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=j">J</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=k">K</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=l">L</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=m">M</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=n">N</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=o">O</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=p">P</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=q">Q</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=r">R</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=s">S</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=t">T</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=u">U</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=v">V</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=w">W</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=x">X</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=y">Y</a></li>
+      <div class="divider-vert"></div>
+      <li><a href="index.html?page=z">Z</a></li>
+    </ul>
+  </body>
+
+  <script>
+    let db = null;
+    const params = new URLSearchParams(window.location.search);
+    var page = 'a';
+
+    if (params.has('page')) {
+      page = params.get('page');
+    }
+
+    async function get_db() {
+      var db_resp = await fetch('media/jank.json');
+      var ret = await db_resp.json();
+      return ret;
+    }
+
+    function card_to_row(name, idx) {
+      var ret = document.createElement('tr');
+      ret.addEventListener('mouseenter', () => {
+        ret.classList.add('active');
+      });
+      ret.addEventListener('mouseleave', () => {
+        ret.classList.remove('active');
+      });
+
+      var card_name = document.createElement('td');
+      card_name.innerText = name;
+      ret.appendChild(card_name);
+
+      var card_points = document.createElement('td');
+      card_points.innerText = db[name].points;
+      ret.appendChild(card_points);
+
+      var card_sets = document.createElement('td');
+      ret.appendChild(card_sets);
+
+      Object.keys(db[name].sets).forEach(set => {
+        var set_div = document.createElement('div');
+        set_div.classList.add('popover');
+        card_sets.appendChild(set_div);
+
+        var set_btn = document.createElement('a');
+        set_btn.classList.add('btn', 'btn-primary');
+        set_btn.innerText = set;
+        set_btn.href = db[name].sets[set];
+        set_div.appendChild(set_btn);
+      });
+
+      return ret;
+    }
+
+
+
+    get_db().then(resp => {
+      db = resp;
+
+      document.getElementById('loader').remove();
+      var cards_tbody = document.getElementById('cards');
+
+      keys_paged = Object.keys(db).filter(name => {
+        name = name.toLocaleLowerCase();
+        if (name[0] == page) {
+          return true;
+        } else if (name[0] == '+' && page == 'a') {
+          return true;
+        } else {
+          return false;
+        }
+      });
+
+      console.debug(`Displaying ${keys_paged.length} cards`);
+
+      keys_paged.forEach((name, idx) => {
+        cards_tbody.appendChild(card_to_row(name, idx));
+      });
+    });
+  </script>
+</html>
