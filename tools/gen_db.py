@@ -166,9 +166,9 @@ def main():
     prices_r = sorted(prices_r)
     prices_u = sorted(prices_u)
 
-    thresh_m = prices_m[int(len(prices_m) * 0.005)]
-    thresh_r = prices_r[int(len(prices_r) * 0.005)]
-    thresh_u = prices_u[int(len(prices_u) * 0.005)]
+    thresh_m = prices_m[int(len(prices_m) * 0.995)]
+    thresh_r = prices_r[int(len(prices_r) * 0.995)]
+    thresh_u = prices_u[int(len(prices_u) * 0.995)]
 
     names = list(cards_db.keys())
     for name in names:
@@ -182,6 +182,12 @@ def main():
             cards_db.pop(name)
         elif points == 1 and price > thresh_u:
             cards_db.pop(name)
+
+    for name in cards_db:
+        card = cards_db[name]
+        card.pop('tix')
+        card.pop('penny')
+        card.pop('price')
 
     # output in slightly special way
     card_lines = []
