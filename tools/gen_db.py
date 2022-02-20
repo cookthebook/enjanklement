@@ -1,4 +1,5 @@
 import json
+import sys
 from typing import List, Dict, Optional
 
 def main():
@@ -74,6 +75,18 @@ def main():
             continue
         new_card['price'] = price_low
 
+        #capture tix as an additional comparison
+        new_card['tix'] = card['prices'].get('tix')
+        if new_card['tix'] is not None:
+            new_card['tix'] = float(new_card['tix'])
+        else:
+            #if card has no tix value, max it out for comparison purpose later
+            new_card['tix'] = sys.float_info.max
+
+        #capture Penny Dreadful legality for additional comparison
+        #Shoutouts to Penny Dreadful, the best way to play Magic Online :)
+        new_card['penny'] = legalities['penny']
+
         rarity = card['rarity']
         if rarity == 'common':
             rarity = 0
@@ -99,6 +112,8 @@ def main():
             cards_db[card['name']] = {
                 'points': card['points'],
                 'price': card['price'],
+                'tix': card['tix'],
+                'penny': card['penny'],
                 'sets': { card['set']: card['uri'] }
             }
             continue
@@ -109,6 +124,8 @@ def main():
             db_card['price'] = card['price']
         if card['points'] < db_card['points']:
             db_card['points'] = card['points']
+        if card['tix'] < db_card['tix']:
+            db_card['tix'] = card['tix']
         if card['set'] not in db_card['sets']:
             db_card['sets'][card['set']] = card['uri']
 
@@ -118,14 +135,52 @@ def main():
         card = cards_db[name]
         points = card['points']
         price = card['price']
+        tix = card['tix']
+        penny = card['penny']
 
-        if points == 3 and price > 2.25:
+        if points == 3 and price > 2.40 and tix > 0.09 and penny == 'not_legal':
             cards_db.pop(name)
-        elif points == 2 and price > 1.50:
+        elif points == 2 and price > 1.60 and tix > 0.06 and penny == 'not_legal':
             cards_db.pop(name)
-        elif points == 1 and price > 0.75:
+        elif points == 1 and price > 0.80 and tix > 0.03 and penny == 'not_legal':
             cards_db.pop(name)
-        elif points == 0 and price > 0.25:
+        elif points == 0 and price > 0.40:
+            cards_db.pop(name)
+    
+    prices_m = []
+    prices_r = []
+    prices_u = []
+    for name in cards_db:
+        card = cards_db[name]
+        points = card['points']
+        price = card['price']
+
+        if points == 3:
+            prices_m.append(price)
+        if points == 2:
+            prices_r.append(price)
+        if points == 1:
+            prices_u.append(price)
+
+    prices_m = sorted(prices_m)
+    prices_r = sorted(prices_r)
+    prices_u = sorted(prices_u)
+
+    thresh_m = prices_m[int(len(prices_m) * 0.005)]
+    thresh_r = prices_r[int(len(prices_r) * 0.005)]
+    thresh_u = prices_u[int(len(prices_u) * 0.005)]
+
+    names = list(cards_db.keys())
+    for name in names:
+        card = cards_db[name]
+        points = card['points']
+        price = card['price']
+
+        if points == 3 and price > thresh_m:
+            cards_db.pop(name)
+        elif points == 2 and price > thresh_r:
+            cards_db.pop(name)
+        elif points == 1 and price > thresh_u:
             cards_db.pop(name)
 
     # output in slightly special way
