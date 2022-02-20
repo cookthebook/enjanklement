@@ -8,15 +8,7 @@
 </head>
 
 <body class="container">
-  <div class="navbar">
-    <section class="navbar-section">
-      <h1><a href="index.html">JANK!</a></h1>
-      <div class="divider-vert"></div>
-      <h2><a href="rules.html">Rules</a></h2>
-      <div class="divider-vert"></div>
-      <h2><a href="list.html">Legal Cards</a></h2>
-    </section>
-  </div>
+  <div id="JankNavbar"></div>
 
   <h1>The List</h1>
   <p>
@@ -78,6 +70,7 @@
 </body>
 
 <script src="js/fuzzysort.js"></script>
+<script src="js/jank.js"></script>
 <script>
   let db = null;
   const params = new URLSearchParams(window.location.search);
