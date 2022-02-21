@@ -19,7 +19,23 @@
       Please note that the card name must be <b><i>exact</i></b>, even for double face cards.
     </p>
 
-    <form class="form-group" style="width: 20rem">
+    <p>
+      <b>Deck Construction Refresher</b>
+      <br>
+      A deck with no mods has a minimum of 40 cards, a maximum of 15 points, and all singleton except for 6 pairs.
+      The sideboard contains a maximum of 10 cards, a maximum of 10 points, and any number of pairs.
+      Cards used must be all standard legal (unless you are using a jumpstart deck, for which this page is not useful anyways).
+    </p>
+
+    <b>Deck Mod Refresher</b>
+    <ul>
+      <li><b>Janklander</b>: 30 card, 14 point main board. All singletons.</li>
+      <li><b>Three-Fifty</b>: 50 card, 16 point main board. Now allow for 3 3-ofs.</li>
+      <li><b>Unga Bunga</b>: Forgoe having a sideboard to give one more point max to the main board.</li>
+      <li><b>Quantum Enjanklement</b>: Go down one main board point to "enjankle" two unique legends in your deck.</li>
+    </ul>
+
+    <div class="form-group p-centered" style="width: 20rem">
       <label class="form-label">Main Board</label>
       <textarea class="form-input" id="mainBoard" placeholder="Edgar, Charmed Groom // Edgar Markov's Coffin 1"></textarea>
 
@@ -27,10 +43,6 @@
       <textarea class="form-input" id="sideBoard" placeholder="Duress 1"></textarea>
 
       <label class="form-label">Deck Mods</label>
-      <label class="form-switch">
-        <input type="checkbox" id="ungaBunga">
-        <i class="form-icon"></i> Unga Bunga
-      </label>
       <label class="form-switch">
         <input type="checkbox" id="janklander">
         <i class="form-icon"></i> Janklander
@@ -40,12 +52,16 @@
         <i class="form-icon"></i> Three-Fifty
       </label>
       <label class="form-switch">
+        <input type="checkbox" id="ungaBunga">
+        <i class="form-icon"></i> Unga Bunga
+      </label>
+      <label class="form-switch">
         <input type="checkbox" id="quantumEnjanklement">
         <i class="form-icon"></i> Quantum Enjanklement
       </label>
-    </form>
-    <button class="btn btn-primary" id="checkBtn" disabled>Check</button>
-    <h3 id="result"></h3>
+      <button class="btn btn-primary" id="checkBtn" disabled>Check</button>
+    </div>
+    <div id="checkerOutput"></div>
   </div>
 </body>
 
@@ -75,10 +91,6 @@
     /* default values are for standard */
     var checker = new DeckChecker(card_db);
 
-    if (unga.checked) {
-      checker.main.points += 1;
-      checker.side.max = 0;
-    }
     if (janklander.checked) {
       checker.main.min = 30;
       checker.main.points -= 1;
@@ -90,6 +102,10 @@
       checker.main.points += 1;
       checker.main.dups[3] = 3;
       checker.side.dups[3] = Infinity;
+    }
+    if (unga.checked) {
+      checker.main.points += 1;
+      checker.side.max = 0;
     }
     if (quantum.checked) {
       checker.main.points -= 1;
@@ -121,14 +137,7 @@
     deck.main = main_lines.map(line_to_card);
     deck.side = side_lines.map(line_to_card);
 
-    var result = checker.check(deck);
-    var result_p = document.getElementById('result');
-
-    if (result.legal === true) {
-      result_p.innerText = 'Legal';
-    } else {
-      result_p.innerText = `Not legal: ${result.reason}`;
-    }
+    checker.check(deck, document.getElementById('checkerOutput'));
   }
 
   fetch('media/jank_standard.json').then(resp => {
@@ -140,6 +149,6 @@
 
   check_btn.addEventListener('click', () => {
     check_deck();
-  })
+  });
 </script>
 </html>
