@@ -88,7 +88,7 @@ class DeckChecker {
         if (this.set_limit !== Infinity) {
             this._possible_set_permutations(deck);
 
-            if (this.permutations.length === 0) {
+            if (this.necessary_sets.length > this.set_limit) {
                 this.result.legal = false;
                 this.result.reason = 'Too many sets required';
                 this._render_result(deck, out_elem);
@@ -221,6 +221,7 @@ class DeckChecker {
         deck.side.forEach(get_necessary);
         deck.main.forEach(get_possible);
         deck.side.forEach(get_possible);
+        return;
 
         var valid_subset = (sets) => {
             if (sets.length > this.set_limit) {
@@ -362,6 +363,34 @@ class DeckChecker {
             elem.appendChild(ext_sets);
         }
 
+        /* Show how many points used */
+        var main_pts = 0;
+        deck.main.forEach(card => {
+            if (BASIC_LANDS.includes(card.name)) {
+                return;
+            }
+
+            var card_db = this.card_db[card.name];
+            main_pts += card.count * card_db.points;
+        });
+        var side_pts = 0;
+        deck.side.forEach(card => {
+            if (BASIC_LANDS.includes(card.name)) {
+                return;
+            }
+
+            var card_db = this.card_db[card.name];
+            side_pts += card.count * card_db.points;
+        });
+
+        var main_pts_p = document.createElement('p');
+        main_pts_p.innerText = `Main board points: ${main_pts}`;
+        elem.appendChild(main_pts_p);
+        var side_pts_p = document.createElement('p');
+        side_pts_p.innerText = `Side board points: ${side_pts}`;
+        elem.appendChild(side_pts_p);
+
+        /* render card table */
         var table = document.createElement('table');
         table.classList.add('table', 'table-striped', 'table-hover');
         elem.appendChild(table);
@@ -378,7 +407,7 @@ class DeckChecker {
         var tbody = document.createElement('tbody');
         table.appendChild(tbody);
 
-        deck.main.forEach(card => {
+        var render_card_row = (card) => {
             var card_db = this.card_db[card.name];
             if (card_db === undefined) {
                 /* this is necessary for basic lands... */
@@ -428,6 +457,9 @@ class DeckChecker {
                 set_btn.href = card_db.sets[set];
                 set_div.appendChild(set_btn);
             });
-        });
+        };
+
+        deck.main.forEach(render_card_row);
+        deck.side.forEach(render_card_row);
     }
 }
