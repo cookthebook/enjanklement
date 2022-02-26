@@ -289,6 +289,34 @@ class DeckChecker {
             elem.appendChild(set_list_p);
         }
 
+        /* Show how many points used */
+        var main_pts = 0;
+        deck.main.forEach(card => {
+            if (BASIC_LANDS.includes(card.name)) {
+                return;
+            }
+
+            var card_db = this.card_db[card.name];
+            main_pts += card.count * card_db.points;
+        });
+        var side_pts = 0;
+        deck.side.forEach(card => {
+            if (BASIC_LANDS.includes(card.name)) {
+                return;
+            }
+
+            var card_db = this.card_db[card.name];
+            side_pts += card.count * card_db.points;
+        });
+
+        var main_pts_p = document.createElement('p');
+        main_pts_p.innerText = `Main board points: ${main_pts}`;
+        elem.appendChild(main_pts_p);
+        var side_pts_p = document.createElement('p');
+        side_pts_p.innerText = `Side board points: ${side_pts}`;
+        elem.appendChild(side_pts_p);
+
+        /* render card table */
         var table = document.createElement('table');
         table.classList.add('table', 'table-striped', 'table-hover');
         elem.appendChild(table);
