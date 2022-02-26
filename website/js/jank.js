@@ -66,9 +66,7 @@ class DeckChecker {
     }
 
     check(deck, out_elem) {
-        this.necessary_sets = [];
-        this.possible_sets = [];
-        this.permutations = [];
+        this.set_list = [];
         this.result = {};
 
         this._check_cards(deck.main, this.main);
@@ -86,9 +84,9 @@ class DeckChecker {
         }
 
         if (this.set_limit !== Infinity) {
-            this._possible_set_permutations(deck);
+            this.set_list = this._possible_set_permutations(deck);
 
-            if (this.permutations.length === 0) {
+            if (this.set_list.length === 0) {
                 this.result.legal = false;
                 this.result.reason = 'Too many sets required';
                 this._render_result(deck, out_elem);
@@ -179,9 +177,9 @@ class DeckChecker {
     }
 
     _possible_set_permutations(deck) {
-        this.necessary_sets = [];
-        this.possible_sets = [];
-        this.permutations = [];
+        var ret = [];
+        var possible_sets = {};
+        var cards_left = [];
 
         var get_necessary = (card) => {
             if (BASIC_LANDS.includes(card.name)) {
@@ -191,138 +189,82 @@ class DeckChecker {
             var db_card = this.card_db[card.name];
             var sets = Object.keys(db_card.sets);
 
-            if (sets.length === 1 && !this.necessary_sets.includes(sets[0])) {
-                this.necessary_sets.push(sets[0]);
+            /* if a card is only in one set, we need to include that set in our final result */
+            if (sets.length === 1 && !ret.includes(sets[0])) {
+                ret.push(sets[0]);
             }
         };
 
-        var get_possible = (card) => {
+        var collect_possible_sets = (card) => {
             if (BASIC_LANDS.includes(card.name)) {
                 return;
             }
 
             var db_card = this.card_db[card.name];
             var sets = Object.keys(db_card.sets);
+            var in_ret = false;
 
+            /* this card has a necessary set, so don't include the rest in the search space */
             for (var i = 0; i < sets.length; i++) {
-                if (this.necessary_sets.includes(sets[i])) {
-                    return;
-                }
-            }
-
-            sets.forEach(set => {
-                if (!this.possible_sets.includes(set)) {
-                    this.possible_sets.push(set);
-                }
-            });
-        };
-
-        deck.main.forEach(get_necessary);
-        deck.side.forEach(get_necessary);
-        deck.main.forEach(get_possible);
-        deck.side.forEach(get_possible);
-
-        var valid_subset = (sets) => {
-            if (sets.length > this.set_limit) {
-                return false;
-            }
-
-            var card_in_subset = (card) => {
-                if (BASIC_LANDS.includes(card.name)) {
-                    return true;
-                }
-
-                var db_card = this.card_db[card.name];
-                var card_sets = Object.keys(db_card.sets);
-
-                for (var i = 0; i < card_sets.length; i++) {
-                    if (sets.includes(card_sets[i])) {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            for (var i = 0; i < deck.main.length; i++) {
-                if (!card_in_subset(deck.main[i])) {
-                    return false;
-                }
-            }
-            for (var i = 0; i < deck.side.length; i++) {
-                if (!card_in_subset(deck.side[i])) {
-                    return false;
-                }
-            }
-
-            return true;
-        };
-
-        /* easy check on necessary sets */
-        if (this.necessary_sets.length > this.set_limit) {
-            return;
-        }
-        if (valid_subset(this.necessary_sets)) {
-            this.permutations = this.necessary_sets.slice();
-            return;
-        }
-
-        var power_set = (array, max_len) => {
-            var ret = [[]];
-
-            for (var i = 0; i < array.length; i++) {
-                var len = ret.length;
-
-                ret.push([i]);
-
-                for (var j = 1; j < len; j++) {
-                    if (ret[j].length >= max_len) {
-                        continue;
-                    }
-
-                    ret.push(ret[j].concat([i]));
-                }
-            }
-
-            return ret.map(subset => {
-                return subset.map(idx => { return array[idx]; });
-            });
-        }
-
-        /* Get the power set of the sets that are not necessary, only getting
-         * subset that wouldn't go over the set limit. Then, check which
-         * permutations fit into this deck */
-        var extra_set_permutations = power_set(
-            this.possible_sets,
-            this.set_limit - this.necessary_sets.length
-        );
-
-        extra_set_permutations.forEach(permutation => {
-            var subset = this.necessary_sets.concat(permutation);
-
-            if (valid_subset(subset)) {
-                this.permutations.push(subset);
-            }
-        });
-
-        /* remove any set not in a permutation from possible sets */
-        for (var i = 0; i < this.possible_sets.length; i++) {
-            var in_perm = false;
-
-            for (var j = 0; j < this.permutations.length; j++) {
-                if (this.permutations[j].includes(this.possible_sets[i])) {
-                    in_perm = true;
+                if (ret.includes(sets[i])) {
+                    in_ret = true;
                     break;
                 }
             }
+            if (in_ret) {
+                return;
+            }
 
-            if (!in_perm) {
-                this.possible_sets.splice(i, 1);
-                i--;
+            cards_left.push(card);
+            /* the sets for this card need to be included in the search space */
+            for (var i = 0; i < sets.length; i++) {
+                if (possible_sets[sets[i]] === undefined) {
+                    possible_sets[sets[i]] = 1;
+                } else {
+                    possible_sets[sets[i]]++;
+                }
             }
         }
 
-        return;
+        while (true) {
+            if (ret.length > this.set_limit) {
+                return [];
+            }
+
+            possible_sets = {};
+            cards_left = [];
+
+            deck.main.forEach(get_necessary);
+            deck.side.forEach(get_necessary);
+
+            deck.main.forEach(collect_possible_sets);
+            deck.side.forEach(collect_possible_sets);
+
+            if (ret.length > this.set_limit) {
+                return [];
+            }
+
+            if (cards_left.length === 0) {
+                break;
+            }
+
+            var sets_left = Object.keys(possible_sets);
+            if (sets_left.length === 0) {
+                return [];
+            }
+
+            var next_set = sets_left[0];
+            for (var i = 1; i < sets_left.length; i++) {
+                if (possible_sets[sets_left[i]] > possible_sets[next_set]) {
+                    next_set = sets_left[i];
+                }
+            }
+
+            ret.push(next_set);
+            console.log(`Push ${next_set} to set list (${possible_sets[next_set]} cards)`);
+        }
+
+        return ret;
     }
 
     _render_result(deck, elem) {
@@ -339,27 +281,12 @@ class DeckChecker {
         }
 
         if (this.set_limit !== Infinity) {
-            var nec_sets_h2 = document.createElement('h2');
-            nec_sets_h2.innerText = 'Necessary Sets';
-            elem.appendChild(nec_sets_h2);
-            var nec_sets = document.createElement('p');
-            if (this.necessary_sets.length > 0) {
-                nec_sets.innerText = this.necessary_sets.map(set => set.toUpperCase()).join(', ');
-            } else {
-                nec_sets.innerText = 'None';
-            }
-            elem.appendChild(nec_sets);
-
-            var ext_sets_h2 = document.createElement('h2');
-            ext_sets_h2.innerText = 'Extra Set Options';
-            elem.appendChild(ext_sets_h2);
-            var ext_sets = document.createElement('p');
-            if (this.possible_sets.length > 0) {
-                ext_sets.innerText = this.possible_sets.map(set => set.toUpperCase()).join(', ');
-            } else {
-                ext_sets.innerText = 'None';
-            }
-            elem.appendChild(ext_sets);
+            var set_list_h2 = document.createElement('h2');
+            set_list_h2.innerText = 'Found Set List';
+            elem.appendChild(set_list_h2);
+            var set_list_p = document.createElement('p');
+            set_list_p.innerText = this.set_list.map(set => set.toUpperCase()).join(', ');
+            elem.appendChild(set_list_p);
         }
 
         var table = document.createElement('table');
@@ -378,7 +305,7 @@ class DeckChecker {
         var tbody = document.createElement('tbody');
         table.appendChild(tbody);
 
-        deck.main.forEach(card => {
+        var render_card = (card) => {
             var card_db = this.card_db[card.name];
             if (card_db === undefined) {
                 /* this is necessary for basic lands... */
@@ -414,10 +341,6 @@ class DeckChecker {
             tr.appendChild(card_sets);
 
             Object.keys(card_db.sets).forEach(set => {
-                if (!this.necessary_sets.includes(set) && !this.possible_sets.includes(set)) {
-                    return;
-                }
-
                 var set_div = document.createElement('div');
                 set_div.classList.add('popover');
                 card_sets.appendChild(set_div);
@@ -428,6 +351,9 @@ class DeckChecker {
                 set_btn.href = card_db.sets[set];
                 set_div.appendChild(set_btn);
             });
-        });
+        }
+
+        deck.main.forEach(render_card);
+        deck.side.forEach(render_card);
     }
 }
