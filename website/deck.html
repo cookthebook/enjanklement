@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" href="css/spectre/spectre.min.css">
+  <link rel="stylesheet" href="css/spectre/spectre-exp.min.css">
+  <link rel="stylesheet" href="css/spectre/spectre-icons.min.css">
+</head>
+
+<body class="container">
+  <div id="JankNavbar"></div>
+
+  <div class="container">
+    <h2>Deck Checker</h2>
+    <p>
+      Enter your deck list separated by main/side board.
+      Make sure each line is formated <code>cardname #</code>.
+      <br>
+      Please note that the card name must be <b><i>exact</i></b>, even for double face cards.
+    </p>
+
+    <b>Class Refresher</b>
+    <p>Both classes have access to a 10 card, 10 point sideboard and up to 6 2-ofs and 3 3-ofs.</p>
+    <ul>
+      <li><b>JankWalker</b>: 55 card, 22 point mainboard using up to all Standard sets.</li>
+      <li><b>JankBringer</b>: 60 card, 22 point mainboard using up to 4 Pioneer sets.</li>
+    </ul>
+
+    <b>Feats Refresher</b>
+    <ul>
+      <li><b>Unga Bunga</b>: Forgo a sideboard to increase starting points by 2.</li>
+      <li><b>Double Down</b>: Reduce deck size by 10 cards and 2 points. No 3-ofs allowed. (Incompatible with Down to One)</li>
+      <li><b>Down to One</b>: Reduce deck size by 20 cards and 4 points. Singletons only. (Incompatible with Double Down)</li>
+      <li><b>Quantum Enjanklement</b>: Spend 1 maindeck point to "enjankle" two legendary cards.</li>
+      <li><b>New Toys</b>: If two or more sets are Standard legal, you get +1 set. (Unavailable for JankWalker)</li>
+    </ul>
+
+    <div class="form-group p-centered" style="width: 20rem">
+      <label class="form-label">Class</label>
+      <select class="form-select" id="classSelect">
+        <option value="jankwalker">JankWalker</option>
+        <option value="jankbringer">JankBringer</option>
+      </select>
+
+      <label class="form-label">Feats</label>
+      <label class="form-switch">
+        <input type="checkbox" id="ungaBunga">
+        <i class="form-icon"></i> Unga Bunga
+      </label>
+      <label class="form-switch">
+        <input type="checkbox" id="doubleDown">
+        <i class="form-icon"></i> Double Down
+      </label>
+      <label class="form-switch">
+        <input type="checkbox" id="downToOne">
+        <i class="form-icon"></i> Down to One
+      </label>
+      <label class="form-switch">
+        <input type="checkbox" id="quantumEnjanklement">
+        <i class="form-icon"></i> Quantum Enjanklement
+      </label>
+      <label class="form-switch">
+        <input type="checkbox" id="newToys">
+        <i class="form-icon"></i> New Toys
+      </label>
+
+      <label class="form-label">Main Board</label>
+      <textarea class="form-input" id="mainBoard" placeholder="Edgar, Charmed Groom // Edgar Markov's Coffin 1"></textarea>
+
+      <label class="form-label">Side Board</label>
+      <textarea class="form-input" id="sideBoard" placeholder="Settle the Wreckage 1"></textarea>
+
+      <br />
+
+      <button class="btn btn-primary" id="checkBtn" disabled>Check</button>
+    </div>
+    <div id="checkerOutput" class="p-centered text-center"></div>
+  </div>
+</body>
+
+<script src="js/jank.js"></script>
+<script>
+  var jankwalker_db = null;
+  var jankbringer_db = null;
+  var check_btn = document.getElementById('checkBtn');
+
+  var class_select = document.getElementById('classSelect');
+
+  var unga = document.getElementById('ungaBunga');
+  var double_down = document.getElementById('doubleDown');
+  var down_to_one = document.getElementById('downToOne');
+  var quantum = document.getElementById('quantumEnjanklement');
+  var new_toys = document.getElementById('newToys');
+
+  /* new toys is incompatible with jankwalker */
+  if (class_select.value === 'jankwalker') {
+    new_toys.checked = false;
+    new_toys.disabled = true;
+  }
+  class_select.addEventListener('input', () => {
+    if (class_select.value === 'jankwalker') {
+      new_toys.checked = false;
+      new_toys.disabled = true;
+    } else {
+      new_toys.disabled = false;
+    }
+  });
+
+  /* double_down and down_to_one are mutually exclusive */
+  double_down.addEventListener('input', () => {
+    if (down_to_one.checked && double_down.checked) {
+      down_to_one.checked = false;
+    }
+  });
+  down_to_one.addEventListener('input', () => {
+    if (down_to_one.checked && double_down.checked) {
+      double_down.checked = false;
+    }
+  });
+
+  function check_deck() {
+    /* default values are for standard */
+    var checker;
+    if (class_select.value === 'jankwalker') {
+      checker = new DeckChecker(jankwalker_db);
+      checker.main.min = 55;
+      checker.set_limit = 4;
+    } else {
+      checker = new DeckChecker(jankbringer_db);
+      checker.main.min = 60;
+      checker.set_limit = Infinity;
+    }
+
+    if (janklander.checked) {
+      checker.main.min = 40;
+      checker.main.points = 25;
+      checker.main.dups[2] = 0;
+      checker.side.max = 10;
+      checker.side.points = 10;
+      checker.side.dups[2] = 0;
+    }
+    if (three_sixty.checked) {
+      checker.main.min = 60;
+      checker.main.points = 31;
+      checker.main.dups[3] = 3;
+      checker.side.max = 14;
+      checker.side.points = 14;
+      checker.side.dups[3] = Infinity;
+    }
+    if (unga.checked) {
+      checker.main.points += 2;
+      checker.side.max = 0;
+    }
+    if (quantum.checked) {
+      checker.main.points -= 1;
+    }
+
+    var main_lines = document.getElementById('mainBoard').value.trim();
+    if (main_lines.length > 0) {
+      main_lines = main_lines.split('\n');
+    } else {
+      main_lines = [];
+    }
+    var side_lines = document.getElementById('sideBoard').value.trim();
+    if (side_lines.length > 0) {
+      side_lines = side_lines.split('\n');
+    } else {
+      side_lines = [];
+    }
+    var deck = {};
+
+    function line_to_card(line) {
+      var ret = {};
+      var line_split = line.split(' ');
+
+      ret.name = line_split.slice(0, line_split.length - 1).join(' ')
+      ret.count = parseInt(line_split[line_split.length - 1]);
+
+      return ret;
+    }
+
+    deck.main = main_lines.map(line_to_card);
+    deck.side = side_lines.map(line_to_card);
+
+    var result = checker.check(deck, document.getElementById('checkerOutput'));
+  }
+
+  fetch('media/jank.json').then(resp => {
+    resp.json().then(db => {
+      card_db = db;
+      // check_btn.disabled = false;
+    });
+  });
+
+  check_btn.addEventListener('click', () => {
+    check_deck();
+  })
+</script>
+</html>

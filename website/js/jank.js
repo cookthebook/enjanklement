@@ -4,41 +4,8 @@ navbar.classList.add('navbar');
 navbar.innerHTML = `
 <section class="navbar-section">
     <h1><a href="index.html">JANK!</a></h1>
-
     <div class="divider-vert"></div>
-
-    <div class="popover popover-bottom">
-        <button class="btn">Standard</button>
-        <div class="popover-container">
-            <ul class="menu">
-                <li class="menu-item">
-                    <a href="standard_rules.html">Rules</a>
-                </li>
-                <li class="menu-item">
-                    <a href="standard_check.html">Deck Checker</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="divider-vert"></div>
-
-    <div class="popover popover-bottom">
-        <button class="btn">Eternal</button>
-        <div class="popover-container">
-            <ul class="menu">
-                <li class="menu-item">
-                    <a href="eternal_rules.html">Rules</a>
-                </li>
-                <li class="menu-item">
-                    <a href="eternal_list.html">Card List</a>
-                </li>
-                <li class="menu-item">
-                    <a href="eternal_check.html">Deck Checker</a>
-                </li>
-            </ul>
-        </div>
-    </div>
+    <a href="deck.html" class="btn">Deck Checker</a>
 </section>`;
 
 const BASIC_LANDS = [
