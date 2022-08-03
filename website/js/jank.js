@@ -8,32 +8,30 @@ navbar.innerHTML = `
     <a href="deck.html" class="btn">Deck Checker</a>
 </section>`;
 
-const BASIC_LANDS = [
-    'Forest', 'Mountain', 'Plains', 'Island', 'Swamp',
-    'Snow-Covered Forest', 'Snow-Covered Mountain', 'Snow-Covered Plains', 'Snow-Covered Island', 'Snow-Covered Swamp',
-    'Wastes'
-];
+/** @type {string[]} */
+var BASIC_LANDS;
+/** @type {string[][]} */
+var FORMATS;
+/** @type {Object} */
+var JANKWALKER_DB;
+/** @type {Object} */
+var JANKBRINGER_DB;
 
 class DeckChecker {
     constructor(
         card_db,
         main = { min: 40, max: Infinity, points: 15, dups: { 2: 6, 3: 0 } },
         side = { min: 0, max: 10, points: 10, dups: { 2: Infinity, 3: 0 } },
-        set_limit = Infinity
+        set_list = null
     ) {
         this.card_db = card_db;
         this.main = main;
         this.side = side;
-        this.set_limit = set_limit;
-        this.mods = [];
-        this.necessary_sets = [];
-        this.possible_sets = [];
-        this.permutations = [];
+        this.set_list = set_list;
         this.result = {};
     }
 
     check(deck, out_elem) {
-        this.set_list = [];
         this.result = {};
 
         this._check_cards(deck.main, this.main);
@@ -50,17 +48,6 @@ class DeckChecker {
             return;
         }
 
-        if (this.set_limit !== Infinity) {
-            this.set_list = this._possible_set_permutations(deck);
-
-            if (this.set_list.length === 0) {
-                this.result.legal = false;
-                this.result.reason = 'Too many sets required';
-                this._render_result(deck, out_elem);
-                return;
-            }
-        }
-
         this.result.legal = true;
         this._render_result(deck, out_elem);
     }
@@ -73,19 +60,43 @@ class DeckChecker {
         /* iterate through cards to tally up card counts, dups, and points */
         for (var i = 0; i < cards.length; i++) {
             var card = cards[i];
+            var dbcard = this.card_db[card.name];
 
             size += card.count;
 
+            /* basics do not count toward points or dupes */
             if (BASIC_LANDS.includes(card.name)) {
                 continue;
             }
 
-            if (this.card_db[card.name] === undefined) {
+            if (dbcard === undefined) {
                 this.result = {
                     legal: false,
                     reason: `Card "${card.name}" not in legal card list`
                 };
                 return;
+            }
+
+            if (this.set_list !== null) {
+                var card_sets = Object.keys(dbcard.sets);
+                var in_set_list = false;
+
+                console.debug('Check if', this.set_list, 'contains', card_sets)
+
+                for (var card_set = 0; card_set < card_sets.length; card_set++) {
+                    if (this.set_list.includes(card_sets[card_set])) {
+                        in_set_list = true;
+                        break;
+                    }
+                }
+
+                if (!in_set_list) {
+                    this.result = {
+                        legal: false,
+                        reason: `Card "${card.name}" is not in the list of selected sets`
+                    };
+                    return;
+                }
             }
 
             if (card.count > 3) {
@@ -143,97 +154,6 @@ class DeckChecker {
         return null;
     }
 
-    _possible_set_permutations(deck) {
-        var ret = [];
-        var possible_sets = {};
-        var cards_left = [];
-
-        var get_necessary = (card) => {
-            if (BASIC_LANDS.includes(card.name)) {
-                return;
-            }
-
-            var db_card = this.card_db[card.name];
-            var sets = Object.keys(db_card.sets);
-
-            /* if a card is only in one set, we need to include that set in our final result */
-            if (sets.length === 1 && !ret.includes(sets[0])) {
-                ret.push(sets[0]);
-            }
-        };
-
-        var collect_possible_sets = (card) => {
-            if (BASIC_LANDS.includes(card.name)) {
-                return;
-            }
-
-            var db_card = this.card_db[card.name];
-            var sets = Object.keys(db_card.sets);
-            var in_ret = false;
-
-            /* this card has a necessary set, so don't include the rest in the search space */
-            for (var i = 0; i < sets.length; i++) {
-                if (ret.includes(sets[i])) {
-                    in_ret = true;
-                    break;
-                }
-            }
-            if (in_ret) {
-                return;
-            }
-
-            cards_left.push(card);
-            /* the sets for this card need to be included in the search space */
-            for (var i = 0; i < sets.length; i++) {
-                if (possible_sets[sets[i]] === undefined) {
-                    possible_sets[sets[i]] = 1;
-                } else {
-                    possible_sets[sets[i]]++;
-                }
-            }
-        }
-
-        while (true) {
-            if (ret.length > this.set_limit) {
-                return [];
-            }
-
-            possible_sets = {};
-            cards_left = [];
-
-            deck.main.forEach(get_necessary);
-            deck.side.forEach(get_necessary);
-
-            deck.main.forEach(collect_possible_sets);
-            deck.side.forEach(collect_possible_sets);
-
-            if (ret.length > this.set_limit) {
-                return [];
-            }
-
-            if (cards_left.length === 0) {
-                break;
-            }
-
-            var sets_left = Object.keys(possible_sets);
-            if (sets_left.length === 0) {
-                return [];
-            }
-
-            var next_set = sets_left[0];
-            for (var i = 1; i < sets_left.length; i++) {
-                if (possible_sets[sets_left[i]] > possible_sets[next_set]) {
-                    next_set = sets_left[i];
-                }
-            }
-
-            ret.push(next_set);
-            console.log(`Push ${next_set} to set list (${possible_sets[next_set]} cards)`);
-        }
-
-        return ret;
-    }
-
     _render_result(deck, elem) {
         while (elem.firstChild) {
             elem.firstChild.remove();
@@ -245,15 +165,6 @@ class DeckChecker {
             msg.innerText = `Not legal - ${this.result.reason}`;
             elem.appendChild(msg);
             return;
-        }
-
-        if (this.set_limit !== Infinity) {
-            var set_list_h2 = document.createElement('h2');
-            set_list_h2.innerText = 'Found Set List';
-            elem.appendChild(set_list_h2);
-            var set_list_p = document.createElement('p');
-            set_list_p.innerText = this.set_list.map(set => set.toUpperCase()).join(', ');
-            elem.appendChild(set_list_p);
         }
 
         /* Show how many points used */
@@ -352,3 +263,112 @@ class DeckChecker {
         deck.side.forEach(render_card);
     }
 }
+
+class JankWalkerChecker extends DeckChecker {
+    constructor(
+        main = { min: 55, max: Infinity, points: 22, dups: { 2: 6, 3: 3 } },
+        side = { min: 0, max: 10, points: 10, dups: { 2: 6, 3: 3 } }
+    ) {
+        super(JANKWALKER_DB, main, side, null);
+    }
+}
+
+class JankBringerChecker extends DeckChecker {
+    constructor(
+        main = { min: 60, max: Infinity, points: 22, dups: { 2: 6, 3: 3 } },
+        side = { min: 0, max: 10, points: 10, dups: { 2: 6, 3: 3 } },
+        set_list = []
+    ) {
+        super(JANKBRINGER_DB, main, side, set_list);
+    }
+}
+
+/**
+ * @param {string} classname
+ * @param {string[]} mods
+ * @param {null|string[]} set_list
+ * @returns {DeckChecker}
+ */
+function checker_factory(classname, mods, set_list) {
+    var ret;
+
+    classname = classname.toLowerCase();
+
+    switch (classname) {
+    case 'jankwalker':
+        ret = new JankWalkerChecker();
+        break;
+    case 'jankbringer':
+        ret = new JankBringerChecker();
+        ret.set_list = set_list;
+        break;
+    default:
+        throw `Invalid classname ${classname}`;
+    }
+
+    mods.forEach(mod => {
+        switch (mod.toLowerCase()) {
+        case 'ungabunga':
+            ret.main.points += 2;
+            ret.side.max = 0;
+            break;
+
+        case 'doubledown':
+            ret.main.min -= 10;
+            ret.main.points -= 2;
+            ret.main.dups[3] = 0;
+            ret.side.dups[3] = 0;
+            break;
+
+        case 'downtoone':
+            ret.main.min -= 20;
+            ret.main.points -= 4;
+            ret.main.dups = { 2: 0, 3: 0 };
+            ret.side.dups = { 2: 0, 3: 0 };
+            break;
+
+        case 'quantumenjanklement':
+            ret.main.points -= 1;
+            break;
+
+        case 'newtoys':
+            /* how do */
+            break;
+
+        default:
+            throw `Invalid mod ${mod}`
+        }
+    });
+
+    return ret;
+}
+
+async function download_sets() {
+    var downloads = [
+        fetch('media/basics.json'),
+        fetch('media/formats.json'),
+        fetch('media/jankwalker.json'),
+        fetch('media/jankbringer.json')
+    ];
+
+    var docs = await Promise.all(downloads);
+    var jsons = docs.map(doc => doc.json());
+    var parsed = await Promise.all(jsons);
+
+    BASIC_LANDS = parsed[0].basics;
+    FORMATS = parsed[1];
+    JANKWALKER_DB = parsed[2];
+    JANKBRINGER_DB = parsed[3];
+}
+
+export {
+    BASIC_LANDS,
+    FORMATS,
+    JANKWALKER_DB,
+    JANKBRINGER_DB,
+    DeckChecker,
+    JankWalkerChecker,
+    JankBringerChecker,
+    checker_factory,
+    download_sets
+};

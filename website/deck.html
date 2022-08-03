@@ -10,7 +10,7 @@
 <body class="container">
   <div id="JankNavbar"></div>
 
-  <div class="container">
+  <div class="container" id="MainContainer" hidden>
     <h2>Deck Checker</h2>
     <p>
       Enter your deck list separated by main/side board.
@@ -42,6 +42,10 @@
         <option value="jankbringer">JankBringer</option>
       </select>
 
+      <div id="setSelectForm" hidden>
+        <label>Set Selection</label>
+      </div>
+
       <label class="form-label">Feats</label>
       <label class="form-switch">
         <input type="checkbox" id="ungaBunga">
@@ -72,19 +76,26 @@
 
       <br />
 
-      <button class="btn btn-primary" id="checkBtn" disabled>Check</button>
+      <button class="btn btn-primary" id="checkBtn">Check</button>
     </div>
     <div id="checkerOutput" class="p-centered text-center"></div>
   </div>
 </body>
 
-<script src="js/jank.js"></script>
-<script>
+<script type="module" src="js/jank.js"></script>
+<script type="module">
+  import {
+    checker_factory,
+    download_sets,
+    FORMATS
+  } from './js/jank.js';
+
   var jankwalker_db = null;
   var jankbringer_db = null;
   var check_btn = document.getElementById('checkBtn');
 
   var class_select = document.getElementById('classSelect');
+  var set_list = document.getElementById('setSelectForm');
 
   var unga = document.getElementById('ungaBunga');
   var double_down = document.getElementById('doubleDown');
@@ -92,18 +103,74 @@
   var quantum = document.getElementById('quantumEnjanklement');
   var new_toys = document.getElementById('newToys');
 
-  /* new toys is incompatible with jankwalker */
-  if (class_select.value === 'jankwalker') {
-    new_toys.checked = false;
-    new_toys.disabled = true;
+
+
+  function create_set_select(sets) {
+    var ret = document.createElement('select');
+    var ret_html = '';
+
+    sets = sets.sort();
+
+    sets.forEach(set => {
+      ret_html += `<option value="${set}">${set.toUpperCase()}</option>`;
+    });
+    ret.innerHTML = ret_html;
+
+    return ret;
   }
-  class_select.addEventListener('input', () => {
+  function render_set_select() {
+    /* leave just the label */
+    while (set_list.children.length > 1) {
+      set_list.lastChild.remove();
+    }
+
+    var set_form = document.createElement('form');
+    set_form.id = 'setSelectOptions';
+    set_list.appendChild(set_form);
+
+    set_form.appendChild(create_set_select(FORMATS['pioneer']));
+    set_form.appendChild(create_set_select(FORMATS['pioneer']));
+
+    /* new toys allows for an extra set if two are standard */
+    if (new_toys.checked) {
+      set_form.appendChild(create_set_select(FORMATS['standard']));
+      set_form.appendChild(create_set_select(FORMATS['standard']));
+    } else {
+      set_form.appendChild(create_set_select(FORMATS['pioneer']));
+    }
+  }
+  function get_set_list() {
+    var set_form = document.getElementById('setSelectOptions');
+
+    if (!set_form) {
+      return [];
+    }
+
+    var ret = [];
+    var set_selects = set_form.getElementsByTagName('select');
+    for (var set_select of set_selects) {
+      ret.push(set_select.value);
+    }
+
+    return ret;
+  }
+
+
+
+  /* new toys is incompatible with jankwalker */
+  function select_class() {
     if (class_select.value === 'jankwalker') {
       new_toys.checked = false;
       new_toys.disabled = true;
     } else {
       new_toys.disabled = false;
+      render_set_select();
+      set_list.hidden = false;
     }
+  }
+  select_class();
+  class_select.addEventListener('input', () => {
+    select_class();
   });
 
   /* double_down and down_to_one are mutually exclusive */
@@ -118,43 +185,39 @@
     }
   });
 
-  function check_deck() {
-    /* default values are for standard */
-    var checker;
-    if (class_select.value === 'jankwalker') {
-      checker = new DeckChecker(jankwalker_db);
-      checker.main.min = 55;
-      checker.set_limit = 4;
-    } else {
-      checker = new DeckChecker(jankbringer_db);
-      checker.main.min = 60;
-      checker.set_limit = Infinity;
-    }
+  /* re-render set select if new toys gets checked */
+  new_toys.addEventListener('input', () => {
+    render_set_select();
+  });
 
-    if (janklander.checked) {
-      checker.main.min = 40;
-      checker.main.points = 25;
-      checker.main.dups[2] = 0;
-      checker.side.max = 10;
-      checker.side.points = 10;
-      checker.side.dups[2] = 0;
-    }
-    if (three_sixty.checked) {
-      checker.main.min = 60;
-      checker.main.points = 31;
-      checker.main.dups[3] = 3;
-      checker.side.max = 14;
-      checker.side.points = 14;
-      checker.side.dups[3] = Infinity;
-    }
+
+
+  function check_deck() {
+    /* construct deck checker based on selected options */
+    var checker;
+    var mods = [];
+
     if (unga.checked) {
-      checker.main.points += 2;
-      checker.side.max = 0;
+      mods.push('ungabunga');
+    }
+    if (double_down.checked) {
+      mods.push('doubledown');
+    }
+    if (down_to_one.checked) {
+      mods.push('downtoone');
     }
     if (quantum.checked) {
-      checker.main.points -= 1;
+      mods.push('quantumenjanklement');
+    }
+    if (new_toys.checked) {
+      mods.push('newtoys');
     }
 
+    checker = checker_factory(class_select.value, mods, get_set_list());
+
+
+
+    /* collect cards */
     var main_lines = document.getElementById('mainBoard').value.trim();
     if (main_lines.length > 0) {
       main_lines = main_lines.split('\n');
@@ -181,19 +244,19 @@
 
     deck.main = main_lines.map(line_to_card);
     deck.side = side_lines.map(line_to_card);
+    console.debug(deck);
 
     var result = checker.check(deck, document.getElementById('checkerOutput'));
   }
 
-  fetch('media/jank.json').then(resp => {
-    resp.json().then(db => {
-      card_db = db;
-      // check_btn.disabled = false;
-    });
-  });
+
 
   check_btn.addEventListener('click', () => {
     check_deck();
-  })
+  });
+  var main_container = document.getElementById('MainContainer');
+  download_sets().then(() => {
+    main_container.hidden = false;
+  });
 </script>
 </html>
