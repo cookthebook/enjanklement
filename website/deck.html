@@ -36,6 +36,11 @@
     </ul>
 
     <div class="form-group p-centered" style="width: 20rem">
+      <button class="btn btn-primary" id="importBtn">Import</button>
+      <input type="file" id="importFile" hidden></input>
+
+      <label class="form-label">Deck Name</label>
+      <input type="text" class="form-input" id="deckName"></input>
       <label class="form-label">Class</label>
       <select class="form-select" id="classSelect">
         <option value="jankwalker">JankWalker</option>
@@ -77,6 +82,7 @@
       <br />
 
       <button class="btn btn-primary" id="checkBtn">Check</button>
+      <button class="btn btn-primary" id="exportBtn">Export</button>
     </div>
     <div id="checkerOutput" class="p-centered text-center"></div>
   </div>
@@ -96,12 +102,17 @@
   } from './js/jank.js';
   import { CardLister } from './js/card_lister.js';
 
+  var deck_name = document.getElementById('deckName');
+
   var main_list = new CardLister(document.getElementById('mainBoard'));
   var side_list = new CardLister(document.getElementById('sideBoard'));
 
   var jankwalker_db = null;
   var jankbringer_db = null;
   var check_btn = document.getElementById('checkBtn');
+  var import_btn = document.getElementById('importBtn');
+  var import_file = document.getElementById('importFile');
+  var export_btn = document.getElementById('exportBtn');
 
   var class_select = document.getElementById('classSelect');
   var set_list = document.getElementById('setSelectForm');
@@ -115,14 +126,15 @@
 
 
   function create_set_select(sets) {
-    var ret = document.createElement('select');
-    var ret_html = '';
+    var ret = document.createElement('div');
+    var ret_html = '<select class="form-select">';
 
     sets = sets.sort();
 
     sets.forEach(set => {
       ret_html += `<option value="${set}">${set.toUpperCase()}</option>`;
     });
+    ret_html += '</select>'
     ret.innerHTML = ret_html;
 
     return ret;
@@ -134,18 +146,24 @@
     }
 
     var set_form = document.createElement('form');
+    set_form.classList.add('form-horizontal');
     set_form.id = 'setSelectOptions';
     set_list.appendChild(set_form);
 
-    set_form.appendChild(create_set_select(FORMATS['pioneer']));
-    set_form.appendChild(create_set_select(FORMATS['pioneer']));
+    var set_form_div = document.createElement('div');
+    set_form_div.classList.add('form-group');
+    set_form.appendChild(set_form_div);
+
+    set_form_div.appendChild(create_set_select(FORMATS['pioneer']));
+    set_form_div.appendChild(create_set_select(FORMATS['pioneer']));
+    set_form_div.appendChild(create_set_select(FORMATS['pioneer']));
 
     /* new toys allows for an extra set if two are standard */
     if (new_toys.checked) {
-      set_form.appendChild(create_set_select(FORMATS['standard']));
-      set_form.appendChild(create_set_select(FORMATS['standard']));
+      set_form_div.appendChild(create_set_select(FORMATS['standard']));
+      set_form_div.appendChild(create_set_select(FORMATS['standard']));
     } else {
-      set_form.appendChild(create_set_select(FORMATS['pioneer']));
+      set_form_div.appendChild(create_set_select(FORMATS['pioneer']));
     }
   }
   function get_set_list() {
@@ -246,5 +264,45 @@
     main_container.hidden = false;
     select_class();
   });
+
+
+  function import_deck() {
+    var file = import_file.files[0];
+
+    file.text().then(text => {
+      var parse = JSON.parse(text);
+      console.debug(parse);
+
+      deck_name.value = parse.deck_name;
+      main_list.import(parse.main);
+      side_list.import(parse.side);
+
+      import_file.removeEventListener('change', import_deck);
+    });
+  }
+
+  function wait_for_deck() {
+    import_file.addEventListener('change', import_deck);
+    import_file.click();
+  }
+
+  function export_deck() {
+    var output = {
+      deck_name: deck_name.value,
+      main: main_list.get_card_list(),
+      side: side_list.get_card_list()
+    };
+    var blob = new Blob([JSON.stringify(output, null, 2)]);
+    const bloburl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = bloburl;
+    link.download = deck_name.value + "-jank.json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  import_btn.addEventListener('click', () => { wait_for_deck(); });
+  export_btn.addEventListener('click', () => { export_deck(); });
 </script>
 </html>

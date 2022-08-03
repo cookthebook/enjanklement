@@ -25,16 +25,17 @@ class CardLister {
     }
 
     import(cards) {
-        this.divs.forEach(div_elem => {
-            div_elem.remove();
-        });
+        while (this.card_elems.length > 0) {
+            this._remove_card_elem(this.card_elems[0]);
+        }
 
-        this.forms = [];
         this.card_elems = [];
 
         cards.forEach(card => {
+            console.debug('Import card', card);
             this._new_card_elem(card.name, card.count);
         });
+        console.debug(this.card_elems);
         this._update();
     }
 
@@ -49,10 +50,9 @@ class CardLister {
     }
 
     _card_elem_to_card(card_elem) {
-        var inputs = card_elem.getElementsByTagName('input');
         return {
-            name: inputs[0].value,
-            count: inputs[1].value
+            name: card_elem.card_name_elem.value,
+            count: card_elem.card_count_elem.value
         };
     }
 
@@ -75,39 +75,55 @@ class CardLister {
 
         /* set label numbers */
         for (let i = 0; i < this.card_elems.length; i++) {
-            this.card_elems[i].firstChild.innerText = `${i+1}. `;
+            this.card_elems[i].card_label_elem.innerText = `${i+1}. `;
         }
     }
 
     _new_card_elem(name='', count=1) {
-        var form_group = document.createElement('form');
-        form_group.classList.add('form-group', 'form-horizontal');
-        this.card_elems.push(form_group);
-        this.elem.appendChild(form_group);
-        form_group.addEventListener('input', () => {
+        var form_horizontal = document.createElement('form');
+        form_horizontal.classList.add('form-horizontal');
+        this.elem.appendChild(form_horizontal);
+        this.card_elems.push(form_horizontal);
+        form_horizontal.addEventListener('input', () => {
             this._update();
         });
 
-        var card_label = document.createElement('label');
-        card_label.classList.add('col-1', 'col-sm-12');
-        form_group.appendChild(card_label);
+        var form_group = document.createElement('div');
+        form_group.classList.add('form-group');
+        form_horizontal.appendChild(form_group);
 
+        var card_label_div = document.createElement('div');
+        card_label_div.classList.add('col-1', 'col-sm-12');
+        form_group.appendChild(card_label_div);
+        var card_label = document.createElement('label');
+        card_label.classList.add('form-label');
+        card_label_div.appendChild(card_label);
+        form_horizontal.card_label_elem = card_label;
+
+        var card_name_div = document.createElement('div');
+        card_name_div.classList.add('col-9', 'col-sm-12');
+        form_group.appendChild(card_name_div);
         var card_name = document.createElement('input');
-        card_name.classList.add('col-9', 'col-sm-12');
+        card_name.classList.add('form-input');
         card_name.type = 'text';
         card_name.placeholder = 'Card Name';
         card_name.value = name;
         card_name.addEventListener('input', () => {
             this._get_suggestions(card_name)
         })
-        form_group.appendChild(card_name);
+        card_name_div.appendChild(card_name);
+        form_horizontal.card_name_elem = card_name;
 
+        var card_count_div = document.createElement('div');
+        card_count_div.classList.add('col-2', 'col-sm-12');
+        form_group.appendChild(card_count_div);
         var card_count = document.createElement('input');
-        card_count.classList.add('col-2', 'col-sm-12');
+        card_count.classList.add('form-input');
         card_count.type = 'number';
         card_count.min = 0;
         card_count.value = count;
-        form_group.appendChild(card_count);
+        card_count_div.appendChild(card_count);
+        form_horizontal.card_count_elem = card_count;
     }
 
     _remove_card_elem(card_elem) {
