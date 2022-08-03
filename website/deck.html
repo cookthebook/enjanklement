@@ -69,10 +69,10 @@
       </label>
 
       <label class="form-label">Main Board</label>
-      <textarea class="form-input" id="mainBoard" placeholder="Edgar, Charmed Groom // Edgar Markov's Coffin 1"></textarea>
+      <div id="mainBoard"></div>
 
       <label class="form-label">Side Board</label>
-      <textarea class="form-input" id="sideBoard" placeholder="Settle the Wreckage 1"></textarea>
+      <div id="sideBoard"></div>
 
       <br />
 
@@ -82,13 +82,22 @@
   </div>
 </body>
 
+<script src="js/fuzzysort.js"></script>
 <script type="module" src="js/jank.js"></script>
+<script type="module" src="js/card_lister.js"></script>
 <script type="module">
   import {
     checker_factory,
     download_sets,
-    FORMATS
+    FORMATS,
+    JANKBRINGER_DB,
+    JANKWALKER_DB,
+    BASIC_LANDS
   } from './js/jank.js';
+  import { CardLister } from './js/card_lister.js';
+
+  var main_list = new CardLister(document.getElementById('mainBoard'));
+  var side_list = new CardLister(document.getElementById('sideBoard'));
 
   var jankwalker_db = null;
   var jankbringer_db = null;
@@ -162,13 +171,16 @@
     if (class_select.value === 'jankwalker') {
       new_toys.checked = false;
       new_toys.disabled = true;
+      main_list.set_card_db(JANKWALKER_DB, BASIC_LANDS);
+      side_list.set_card_db(JANKWALKER_DB, BASIC_LANDS);
     } else {
       new_toys.disabled = false;
       render_set_select();
       set_list.hidden = false;
+      main_list.set_card_db(JANKBRINGER_DB, BASIC_LANDS);
+      side_list.set_card_db(JANKBRINGER_DB, BASIC_LANDS);
     }
   }
-  select_class();
   class_select.addEventListener('input', () => {
     select_class();
   });
@@ -215,35 +227,10 @@
 
     checker = checker_factory(class_select.value, mods, get_set_list());
 
-
-
-    /* collect cards */
-    var main_lines = document.getElementById('mainBoard').value.trim();
-    if (main_lines.length > 0) {
-      main_lines = main_lines.split('\n');
-    } else {
-      main_lines = [];
-    }
-    var side_lines = document.getElementById('sideBoard').value.trim();
-    if (side_lines.length > 0) {
-      side_lines = side_lines.split('\n');
-    } else {
-      side_lines = [];
-    }
-    var deck = {};
-
-    function line_to_card(line) {
-      var ret = {};
-      var line_split = line.split(' ');
-
-      ret.name = line_split.slice(0, line_split.length - 1).join(' ')
-      ret.count = parseInt(line_split[line_split.length - 1]);
-
-      return ret;
-    }
-
-    deck.main = main_lines.map(line_to_card);
-    deck.side = side_lines.map(line_to_card);
+    var deck = {
+      main: main_list.get_card_list(),
+      side: side_list.get_card_list()
+    };
     console.debug(deck);
 
     var result = checker.check(deck, document.getElementById('checkerOutput'));
@@ -257,6 +244,7 @@
   var main_container = document.getElementById('MainContainer');
   download_sets().then(() => {
     main_container.hidden = false;
+    select_class();
   });
 </script>
 </html>
