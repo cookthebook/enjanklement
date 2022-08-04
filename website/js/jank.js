@@ -160,12 +160,14 @@ class DeckChecker {
         }
 
         /* for not legal result, just render a message */
+        var msg = document.createElement('h4');
+        elem.appendChild(msg);
+
         if (this.result.legal === false) {
-            var msg = document.createElement('h2');
             msg.innerText = `Not legal - ${this.result.reason}`;
-            elem.appendChild(msg);
             return;
         }
+        msg.innerText = 'Deck Legal!'
 
         /* Show how many points used */
         var main_pts = 0;
