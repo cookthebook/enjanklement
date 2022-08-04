@@ -5,7 +5,7 @@ navbar.innerHTML = `
 <section class="navbar-section">
     <h1><a href="index.html">JANK!</a></h1>
     <div class="divider-vert"></div>
-    <a href="deck.html" class="btn">Deck Checker</a>
+    <a href="deck.html" class="btn">Deck Tool</a>
 </section>`;
 
 /** @type {string[]} */
@@ -188,10 +188,10 @@ class DeckChecker {
         });
 
         var main_pts_p = document.createElement('p');
-        main_pts_p.innerText = `Main board points: ${main_pts}`;
+        main_pts_p.innerText = `Main board points: ${main_pts}/${this.main.points}`;
         elem.appendChild(main_pts_p);
         var side_pts_p = document.createElement('p');
-        side_pts_p.innerText = `Side board points: ${side_pts}`;
+        side_pts_p.innerText = `Side board points: ${side_pts}/${this.side.points}`;
         elem.appendChild(side_pts_p);
 
         /* render card table */
@@ -267,7 +267,7 @@ class DeckChecker {
 class JankWalkerChecker extends DeckChecker {
     constructor(
         main = { min: 55, max: Infinity, points: 22, dups: { 2: 6, 3: 3 } },
-        side = { min: 0, max: 10, points: 10, dups: { 2: 6, 3: 3 } }
+        side = { min: 0, max: 11, points: 11, dups: { 2: 6, 3: 3 } }
     ) {
         super(JANKWALKER_DB, main, side, null);
     }
@@ -276,7 +276,7 @@ class JankWalkerChecker extends DeckChecker {
 class JankBringerChecker extends DeckChecker {
     constructor(
         main = { min: 60, max: Infinity, points: 22, dups: { 2: 6, 3: 3 } },
-        side = { min: 0, max: 10, points: 10, dups: { 2: 6, 3: 3 } },
+        side = { min: 0, max: 12, points: 12, dups: { 2: 6, 3: 3 } },
         set_list = []
     ) {
         super(JANKBRINGER_DB, main, side, set_list);
@@ -316,6 +316,8 @@ function checker_factory(classname, mods, set_list) {
         case 'doubledown':
             ret.main.min -= 10;
             ret.main.points -= 2;
+            ret.side.max -= 2;
+            ret.side.points -= 2;
             ret.main.dups[3] = 0;
             ret.side.dups[3] = 0;
             break;
@@ -323,6 +325,8 @@ function checker_factory(classname, mods, set_list) {
         case 'downtoone':
             ret.main.min -= 20;
             ret.main.points -= 4;
+            ret.side.max -= 4;
+            ret.side.points -= 4;
             ret.main.dups = { 2: 0, 3: 0 };
             ret.side.dups = { 2: 0, 3: 0 };
             break;

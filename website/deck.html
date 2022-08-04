@@ -10,73 +10,157 @@
 <body class="container">
   <div id="JankNavbar"></div>
 
-  <div class="container" id="MainContainer" hidden>
-    <h2>Deck Checker</h2>
+  <div class="container" id="MainContainer" style="min-width: 20rem; max-width: 40rem;" hidden>
+    <h2>Deck Tool</h2>
+
     <p>
-      Enter your deck list separated by main/side board.
-      Make sure each line is formated <code>cardname #</code>.
-      <br>
-      Please note that the card name must be <b><i>exact</i></b>, even for double face cards.
+      This tool allows you to construct and check the legality of Jank decks!
+      If you are happy with the list you've created, you can click the "Export"
+      button to save the list to a file which can be imported again later, or
+      shared with others. Follow the steps below to get deck building!
     </p>
 
-    <b>Class Refresher</b>
-    <p>Both classes have access to a 10 card, 10 point sideboard and up to 6 2-ofs and 3 3-ofs.</p>
-    <ul>
-      <li><b>JankWalker</b>: 55 card, 22 point mainboard using up to all Standard sets.</li>
-      <li><b>JankBringer</b>: 60 card, 22 point mainboard using up to 4 Pioneer sets.</li>
-    </ul>
-
-    <b>Feats Refresher</b>
-    <ul>
-      <li><b>Unga Bunga</b>: Forgo a sideboard to increase starting points by 2.</li>
-      <li><b>Double Down</b>: Reduce deck size by 10 cards and 2 points. No 3-ofs allowed. (Incompatible with Down to One)</li>
-      <li><b>Down to One</b>: Reduce deck size by 20 cards and 4 points. Singletons only. (Incompatible with Double Down)</li>
-      <li><b>Quantum Enjanklement</b>: Spend 1 maindeck point to "enjankle" two legendary cards.</li>
-      <li><b>New Toys</b>: If two or more sets are Standard legal, you get +1 set. (Unavailable for JankWalker)</li>
-    </ul>
-
-    <div class="form-group p-centered" style="width: 20rem">
-      <button class="btn btn-primary" id="importBtn">Import</button>
+    <div class="form-group p-centered">
+      <h4>Step 0: Import</h4>
+      <p>Already made and exported a deck? You can import it with this button! &#128071;</p>
+      <button class="btn btn-primary p-centered" id="importBtn">Import</button>
       <input type="file" id="importFile" hidden></input>
+      <br />
 
-      <label class="form-label">Deck Name</label>
-      <input type="text" class="form-input" id="deckName"></input>
-      <label class="form-label">Class</label>
-      <select class="form-select" id="classSelect">
-        <option value="jankwalker">JankWalker</option>
-        <option value="jankbringer">JankBringer</option>
-      </select>
+      <h4>Step 1: Deck Name</h4>
+      <p>
+        Every great deck has a name to remember it by. Jank and Taxes? Hedron Ajankment?
+        The only limit is your imagination! &#128588;&#127752;&#128588;
+      </p>
+      <input type="text" class="form-input" placeholder="Enter your deck name" id="deckName"></input>
+      <br />
 
-      <div id="setSelectForm" hidden>
-        <label>Set Selection</label>
+      <h4>Step 2: Class Selection</h4>
+      <p>
+        Choose your fighter! These classes define what kinds of cards you can use and decks you can build.
+        Select wisely, Planeswalker...
+      </p>
+      <div class="form-group" id="classForm">
+        <label class="form-radio">
+          <input type="radio" name="classSelect" id="jankwalker" checked>
+            <figure class="avatar avatar-xl c-hand p-centered">
+              <img src="media/jankwalker_pfp.png" alt="jankwalker profile pic">
+              <i class="avatar-presence online" id="jankwalkerPresence"></i>
+            </figure>
+            <h5 class="p-centered text-center">The JankWalker</h5>
+          </input>
+          <div class="p-centered text-center">
+            55 card, 22 point mainboard with an 11 card, 11 point sideboard - using any amount of <b>Standard</b> sets
+          </div>
+          </label>
+        <label class="form-radio">
+          <input type="radio" name="classSelect" id="jankbringer">
+            <figure class="avatar avatar-xl c-hand p-centered">
+              <img src="media/jankbringer_pfp.png" alt="jankbringer profile pic">
+              <i class="avatar-presence online" id="jankbringerPresence" hidden></i>
+            </figure>
+            <h5 class="p-centered text-center">The JankBringer</h5>
+          </input>
+          <div class="p-centered text-center">
+            60 card, 22 point mainboard with a 12 card, 12 point sideboard - using up to 4 <b>Pioneer</b> sets
+          </div>
+        </label>
       </div>
+      <br />
 
-      <label class="form-label">Feats</label>
+      <h4>Step 3. Feat Selection</h4>
+      <p>
+        Feats are modifications that give your deck powerful benefits (at a cost, of course &#128527;).
+        Hover over any of the &#10090;?&#10091; for more information about a feat.
+      </p>
       <label class="form-switch">
-        <input type="checkbox" id="ungaBunga">
+        <input type="checkbox" id="ungabunga" />
         <i class="form-icon"></i> Unga Bunga
+        <div class="popover popover-right">
+          &#10090;?&#10091;
+          <div class="popover-container">
+            <div class="card">
+              <div class="card-body">
+                Forgo a sideboard to increase starting points by 2
+              </div>
+            </div>
+          </div>
+        </div>
       </label>
       <label class="form-switch">
-        <input type="checkbox" id="doubleDown">
+        <input type="checkbox" id="doubledown">
         <i class="form-icon"></i> Double Down
+        <div class="popover popover-right">
+          &#10090;?&#10091;
+          <div class="popover-container">
+            <div class="card">
+              <div class="card-body">
+                Reduce deck size by 10 cards and 2 points, no 3-ofs allowed (incompatible with Down to One)
+              </div>
+            </div>
+          </div>
+        </div>
       </label>
       <label class="form-switch">
-        <input type="checkbox" id="downToOne">
+        <input type="checkbox" id="downtoone">
         <i class="form-icon"></i> Down to One
+        <div class="popover popover-right">
+          &#10090;?&#10091;
+          <div class="popover-container">
+            <div class="card">
+              <div class="card-body">
+                Reduce deck size by 20 cards and 4 points, singletons only (incompatible with Double Down)
+              </div>
+            </div>
+          </div>
+        </div>
       </label>
       <label class="form-switch">
-        <input type="checkbox" id="quantumEnjanklement">
+        <input type="checkbox" id="quantumenjanklement">
         <i class="form-icon"></i> Quantum Enjanklement
+        <div class="popover popover-right">
+          &#10090;?&#10091;
+          <div class="popover-container">
+            <div class="card">
+              <div class="card-body">
+                Spend 1 maindeck point to "enjankle" two legendary cards
+              </div>
+            </div>
+          </div>
+        </div>
       </label>
       <label class="form-switch">
-        <input type="checkbox" id="newToys">
+        <input type="checkbox" id="newtoys">
         <i class="form-icon"></i> New Toys
+        <div class="popover popover-right">
+          &#10090;?&#10091;
+          <div class="popover-container">
+            <div class="card">
+              <div class="card-body">
+                If two or more sets are Standard legal, you get +1 set (unavailable for JankWalker)
+              </div>
+            </div>
+          </div>
+        </div>
       </label>
+      <br />
 
-      <label class="form-label">Main Board</label>
+      <h4>Step 4. Set Selection</h4>
+      <p>Choose which sets you want to include for your deck (not applicable to JankWalker, which can use all Standard sets).</p>
+      <div id="setSelectForm" hidden>
+      </div>
+      <br />
+
+      <h4>Step 5. Card Selection</h4>
+      <p>
+        The part we've been waiting for... constructing your deck &#128526;!
+        Input every card name and the number you want for your main board and side board.
+        Remember, decks can only have 6 2-ofs and 3 3-ofs (except for basic lands) - feats can modify this rule though.
+        The rest have to be singleton!
+      <h5>Main Board</h5>
       <div id="mainBoard"></div>
 
-      <label class="form-label">Side Board</label>
+      <h5>Side Board</h5>
       <div id="sideBoard"></div>
 
       <br />
@@ -114,16 +198,50 @@
   var import_file = document.getElementById('importFile');
   var export_btn = document.getElementById('exportBtn');
 
-  var class_select = document.getElementById('classSelect');
+  var class_form = document.getElementById('classForm');
+  var class_radios = document.getElementsByName('classSelect');
   var set_list = document.getElementById('setSelectForm');
+  var set_selects = [];
 
-  var unga = document.getElementById('ungaBunga');
-  var double_down = document.getElementById('doubleDown');
-  var down_to_one = document.getElementById('downToOne');
-  var quantum = document.getElementById('quantumEnjanklement');
-  var new_toys = document.getElementById('newToys');
+  var unga = document.getElementById('ungabunga');
+  var double_down = document.getElementById('doubledown');
+  var down_to_one = document.getElementById('downtoone');
+  var quantum = document.getElementById('quantumenjanklement');
+  var new_toys = document.getElementById('newtoys');
 
 
+
+  function selected_class() {
+    for (let i = 0, length = class_radios.length; i < length; i++) {
+      if (class_radios[i].checked) {
+        return class_radios[i].id;
+      }
+    }
+
+    return '';
+  }
+
+  function get_mod_list() {
+    var mods = [];
+
+    if (unga.checked) {
+      mods.push('ungabunga');
+    }
+    if (double_down.checked) {
+      mods.push('doubledown');
+    }
+    if (down_to_one.checked) {
+      mods.push('downtoone');
+    }
+    if (quantum.checked) {
+      mods.push('quantumenjanklement');
+    }
+    if (new_toys.checked) {
+      mods.push('newtoys');
+    }
+
+    return mods;
+  }
 
   function create_set_select(sets) {
     var ret = document.createElement('div');
@@ -140,10 +258,10 @@
     return ret;
   }
   function render_set_select() {
-    /* leave just the label */
-    while (set_list.children.length > 1) {
-      set_list.lastChild.remove();
+    while (set_list.firstChild) {
+      set_list.firstChild.remove();
     }
+    set_selects = [];
 
     var set_form = document.createElement('form');
     set_form.classList.add('form-horizontal');
@@ -154,16 +272,28 @@
     set_form_div.classList.add('form-group');
     set_form.appendChild(set_form_div);
 
-    set_form_div.appendChild(create_set_select(FORMATS['pioneer']));
-    set_form_div.appendChild(create_set_select(FORMATS['pioneer']));
-    set_form_div.appendChild(create_set_select(FORMATS['pioneer']));
+    var new_select = create_set_select(FORMATS['pioneer']);
+    set_form_div.appendChild(new_select);
+    set_selects.push(new_select.firstChild);
+    new_select = create_set_select(FORMATS['pioneer']);
+    set_form_div.appendChild(new_select);
+    set_selects.push(new_select.firstChild);
+    new_select = create_set_select(FORMATS['pioneer']);
+    set_form_div.appendChild(new_select);
+    set_selects.push(new_select.firstChild);
 
     /* new toys allows for an extra set if two are standard */
     if (new_toys.checked) {
-      set_form_div.appendChild(create_set_select(FORMATS['standard']));
-      set_form_div.appendChild(create_set_select(FORMATS['standard']));
+      new_select = create_set_select(FORMATS['standard']);
+      set_form_div.appendChild(new_select);
+      set_selects.push(new_select.firstChild);
+      new_select = create_set_select(FORMATS['standard']);
+      set_form_div.appendChild(new_select);
+      set_selects.push(new_select.firstChild);
     } else {
-      set_form_div.appendChild(create_set_select(FORMATS['pioneer']));
+      new_select = create_set_select(FORMATS['pioneer']);
+      set_form_div.appendChild(new_select);
+      set_selects.push(new_select.firstChild);
     }
   }
   function get_set_list() {
@@ -174,9 +304,8 @@
     }
 
     var ret = [];
-    var set_selects = set_form.getElementsByTagName('select');
-    for (var set_select of set_selects) {
-      ret.push(set_select.value);
+    for (let i = 0; i < set_selects.length; i++) {
+      ret.push(set_selects[i].value);
     }
 
     return ret;
@@ -186,9 +315,17 @@
 
   /* new toys is incompatible with jankwalker */
   function select_class() {
-    if (class_select.value === 'jankwalker') {
+    for (let i = 0, length = class_radios.length; i < length; i++) {
+      let presence = document.getElementById(class_radios[i].id + 'Presence');
+
+      presence.hidden = !class_radios[i].checked;
+    }
+
+    console.debug('Select class', selected_class());
+    if (selected_class() === 'jankwalker') {
       new_toys.checked = false;
       new_toys.disabled = true;
+      set_list.hidden = true;
       main_list.set_card_db(JANKWALKER_DB, BASIC_LANDS);
       side_list.set_card_db(JANKWALKER_DB, BASIC_LANDS);
     } else {
@@ -199,7 +336,8 @@
       side_list.set_card_db(JANKBRINGER_DB, BASIC_LANDS);
     }
   }
-  class_select.addEventListener('input', () => {
+  class_form.addEventListener('input', () => {
+    console.debug('class form input');
     select_class();
   });
 
@@ -225,25 +363,8 @@
   function check_deck() {
     /* construct deck checker based on selected options */
     var checker;
-    var mods = [];
 
-    if (unga.checked) {
-      mods.push('ungabunga');
-    }
-    if (double_down.checked) {
-      mods.push('doubledown');
-    }
-    if (down_to_one.checked) {
-      mods.push('downtoone');
-    }
-    if (quantum.checked) {
-      mods.push('quantumenjanklement');
-    }
-    if (new_toys.checked) {
-      mods.push('newtoys');
-    }
-
-    checker = checker_factory(class_select.value, mods, get_set_list());
+    checker = checker_factory(selected_class(), get_mod_list(), get_set_list());
 
     var deck = {
       main: main_list.get_card_list(),
@@ -262,6 +383,9 @@
   var main_container = document.getElementById('MainContainer');
   download_sets().then(() => {
     main_container.hidden = false;
+    window.addEventListener("beforeunload", (event) => {
+      event.returnValue = true;
+    });
     select_class();
   });
 
@@ -274,6 +398,31 @@
       console.debug(parse);
 
       deck_name.value = parse.deck_name;
+
+      for (let i = 0; i < class_radios.length; i++) {
+        if (class_radios[i].id === parse.class) {
+          class_radios[i].checked = true;
+          select_class();
+          break;
+        }
+      }
+
+      for (let i = 0; i < parse.mods.length; i++) {
+        var mod_elem = document.getElementById(parse.mods[i]);
+
+        if (!mod_elem) {
+          console.debug('No mod', parse.mods[i]);
+          continue;
+        }
+
+        mod_elem.checked = true;
+      }
+
+      for (let i = 0; i < set_selects.length && i < parse.set_list.length; i++) {
+        console.debug('Select set', parse.set_list[i]);
+        set_selects[i].value = parse.set_list[i];
+      }
+
       main_list.import(parse.main);
       side_list.import(parse.side);
 
@@ -289,6 +438,9 @@
   function export_deck() {
     var output = {
       deck_name: deck_name.value,
+      class: selected_class(),
+      mods: get_mod_list(),
+      set_list: get_set_list(),
       main: main_list.get_card_list(),
       side: side_list.get_card_list()
     };

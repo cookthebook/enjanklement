@@ -35,7 +35,6 @@ class CardLister {
             console.debug('Import card', card);
             this._new_card_elem(card.name, card.count);
         });
-        console.debug(this.card_elems);
         this._update();
     }
 
@@ -52,7 +51,7 @@ class CardLister {
     _card_elem_to_card(card_elem) {
         return {
             name: card_elem.card_name_elem.value,
-            count: card_elem.card_count_elem.value
+            count: parseInt(card_elem.card_count_elem.value)
         };
     }
 
