@@ -317,24 +317,33 @@ function checker_factory(classname, mods, set_list) {
 
         case 'doubledown':
             ret.main.min -= 10;
+            if (ret.main.min < 0) ret.main.min = 0;
             ret.main.points -= 2;
+            if (ret.main.points < 0) ret.main.points = 0;
             ret.side.max -= 2;
+            if (ret.side.max < 0) ret.side.max = 0;
             ret.side.points -= 2;
+            if (ret.side.points < 0) ret.side.points = 0;
             ret.main.dups[3] = 0;
             ret.side.dups[3] = 0;
             break;
 
         case 'downtoone':
             ret.main.min -= 20;
+            if (ret.main.min < 0) ret.main.min = 0;
             ret.main.points -= 4;
+            if (ret.main.points < 0) ret.main.points = 0;
             ret.side.max -= 4;
+            if (ret.side.max < 0) ret.side.max = 0;
             ret.side.points -= 4;
+            if (ret.side.points < 0) ret.side.points = 0;
             ret.main.dups = { 2: 0, 3: 0 };
             ret.side.dups = { 2: 0, 3: 0 };
             break;
 
         case 'quantumenjanklement':
             ret.main.points -= 1;
+            if (ret.main.points < 0) ret.main.points = 0;
             break;
 
         case 'newtoys':
