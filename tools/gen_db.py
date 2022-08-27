@@ -1,12 +1,27 @@
 import json
+import os
 import sys
 from typing import List, Dict, Optional
+import requests
 
 def main():
     # acquire this file from https://scryfall.com/docs/api/bulk-data
-    fd = open('default-cards.json', 'r')
-    cards: List[dict] = json.load(fd)
-    fd.close()
+    print('Downloading card data from Scryfall')
+    if not os.path.exists('default-cards.json'):
+        req = requests.get('https://api.scryfall.com/bulk-data')
+        bulk_data = req.json()
+        for obj in bulk_data['data']:
+            if obj['type'] != 'default_cards':
+                continue
+
+            req = requests.get(obj['download_uri'])
+            cards = req.json()
+            print('Done')
+        f = open('default-cards.json', 'w')
+        f.write(json.dumps(cards))
+        f.close()
+    else:
+        cards = json.loads(open('default-cards.json', 'r').read())
 
     cards_all: List[dict] = []
     cards_db: Dict[dict] = {}
@@ -75,18 +90,6 @@ def main():
             continue
         new_card['price'] = price_low
 
-        #capture tix as an additional comparison
-        new_card['tix'] = card['prices'].get('tix')
-        if new_card['tix'] is not None:
-            new_card['tix'] = float(new_card['tix'])
-        else:
-            #if card has no tix value, max it out for comparison purpose later
-            new_card['tix'] = sys.float_info.max
-
-        #capture Penny Dreadful legality for additional comparison
-        #Shoutouts to Penny Dreadful, the best way to play Magic Online :)
-        new_card['penny'] = legalities['penny']
-
         rarity = card['rarity']
         if rarity == 'common':
             rarity = 0
@@ -112,8 +115,6 @@ def main():
             cards_db[card['name']] = {
                 'points': card['points'],
                 'price': card['price'],
-                'tix': card['tix'],
-                'penny': card['penny'],
                 'sets': { card['set']: card['uri'] }
             }
             continue
@@ -124,70 +125,38 @@ def main():
             db_card['price'] = card['price']
         if card['points'] < db_card['points']:
             db_card['points'] = card['points']
-        if card['tix'] < db_card['tix']:
-            db_card['tix'] = card['tix']
         if card['set'] not in db_card['sets']:
             db_card['sets'][card['set']] = card['uri']
 
     # filter out cards that do not meet the price threshold (and sort by name)
     names = sorted(list(cards_db.keys()))
+
+    rare_prices = []
     for name in names:
         card = cards_db[name]
-        points = card['points']
-        price = card['price']
-        tix = card['tix']
-        penny = card['penny']
+        if card['points'] != 2:
+            continue
+        rare_prices.append(card['price'])
+    rare_prices = sorted(rare_prices)
+    rare_ths = rare_prices[int(len(rare_prices)*0.75)]
+    mythic_ths = rare_ths * 1.5
+    uncom_ths = rare_ths / 2
 
-        if points == 3 and price > 2.40 and tix > 0.09 and penny == 'not_legal':
-            cards_db.pop(name)
-        elif points == 2 and price > 1.60 and tix > 0.06 and penny == 'not_legal':
-            cards_db.pop(name)
-        elif points == 1 and price > 0.80 and tix > 0.03 and penny == 'not_legal':
-            cards_db.pop(name)
-        elif points == 0 and price > 0.40:
-            cards_db.pop(name)
-    
-    prices_m = []
-    prices_r = []
-    prices_u = []
-    for name in cards_db:
-        card = cards_db[name]
-        points = card['points']
-        price = card['price']
+    print(f'Prices:\nMythic: {mythic_ths}\nRare: {rare_ths}\nUncommon: {uncom_ths}')
 
-        if points == 3:
-            prices_m.append(price)
-        if points == 2:
-            prices_r.append(price)
-        if points == 1:
-            prices_u.append(price)
-
-    prices_m = sorted(prices_m)
-    prices_r = sorted(prices_r)
-    prices_u = sorted(prices_u)
-
-    thresh_m = prices_m[int(len(prices_m) * 0.995)]
-    thresh_r = prices_r[int(len(prices_r) * 0.995)]
-    thresh_u = prices_u[int(len(prices_u) * 0.995)]
-
-    names = list(cards_db.keys())
     for name in names:
         card = cards_db[name]
         points = card['points']
         price = card['price']
 
-        if points == 3 and price > thresh_m:
+        if points == 3 and price > mythic_ths:
             cards_db.pop(name)
-        elif points == 2 and price > thresh_r:
+        elif points == 2 and price > rare_ths:
             cards_db.pop(name)
-        elif points == 1 and price > thresh_u:
+        elif points == 1 and price > uncom_ths:
             cards_db.pop(name)
-
-    for name in cards_db:
-        card = cards_db[name]
-        card.pop('tix')
-        card.pop('penny')
-        card.pop('price')
+        elif points == 0 and price > 0.25:
+            cards_db.pop(name)
 
     # output in slightly special way
     card_lines = []
