@@ -5,9 +5,18 @@ from typing import List, Dict, Optional
 import requests
 
 def main():
+    outpath = '../website/media/jank.json'
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '-h':
+            print('Usage: gen_db.py [output.json]')
+            print('   output.json: defaults to "../website/media/jank.json"')
+            sys.exit(0)
+
+        outpath = sys.argv[1]
+
     # acquire this file from https://scryfall.com/docs/api/bulk-data
-    print('Downloading card data from Scryfall')
     if not os.path.exists('default-cards.json'):
+        print('Downloading card data from Scryfall')
         req = requests.get('https://api.scryfall.com/bulk-data')
         bulk_data = req.json()
         for obj in bulk_data['data']:
@@ -21,10 +30,14 @@ def main():
         f.write(json.dumps(cards))
         f.close()
     else:
+        print('default-cards.json exists')
         cards = json.loads(open('default-cards.json', 'r').read())
 
     cards_all: List[dict] = []
     cards_db: Dict[dict] = {}
+
+    banlist = json.load(open('../website/media/banlist.json', 'r'))['banlist']
+    print(banlist)
 
     # First, just get every card we could possibly care about
     for card in cards:
@@ -65,6 +78,10 @@ def main():
         # no gold borders:
         if card['border_color'] == 'gold':
             continue
+        # banlist
+        if card['name'] in banlist:
+            print(f'{card["name"]} banned')
+            continue
 
 
 
@@ -103,6 +120,9 @@ def main():
 
         new_card['uri'] = card['scryfall_uri']
 
+        if 'Fable of the Mirror' in card['name']:
+            print('break plz')
+
         # add this to the list, prices and rarity get sorted out later
         cards_all.append(new_card)
 
@@ -131,31 +151,22 @@ def main():
     # filter out cards that do not meet the price threshold (and sort by name)
     names = sorted(list(cards_db.keys()))
 
-    rare_prices = []
+    prices = []
     for name in names:
         card = cards_db[name]
-        if card['points'] != 2:
-            continue
-        rare_prices.append(card['price'])
-    rare_prices = sorted(rare_prices)
-    rare_ths = rare_prices[int(len(rare_prices)*0.75)]
-    mythic_ths = rare_ths * 1.5
-    uncom_ths = rare_ths / 2
+        prices.append(card['price'])
+    prices = sorted(prices)
+    bulk_ths = prices[int(len(prices)*0.67)]
 
-    print(f'Prices:\nMythic: {mythic_ths}\nRare: {rare_ths}\nUncommon: {uncom_ths}')
+    print(f'Price threshold: {bulk_ths}')
+    if bulk_ths < 0.25:
+        bulk_ths = 0.25
 
     for name in names:
         card = cards_db[name]
-        points = card['points']
         price = card['price']
 
-        if points == 3 and price > mythic_ths:
-            cards_db.pop(name)
-        elif points == 2 and price > rare_ths:
-            cards_db.pop(name)
-        elif points == 1 and price > uncom_ths:
-            cards_db.pop(name)
-        elif points == 0 and price > 0.25:
+        if price > bulk_ths:
             cards_db.pop(name)
 
     # output in slightly special way
@@ -164,7 +175,7 @@ def main():
     for name in names:
         name_esc = name.replace('"', '\\"')
         card_lines.append(f'  "{name_esc}": ' + json.dumps(cards_db[name]))
-    fd = open('../website/media/jank.json', 'w')
+    fd = open(outpath, 'w')
     fd.write('{\n')
     fd.write(',\n'.join(card_lines))
     fd.write('\n}')
