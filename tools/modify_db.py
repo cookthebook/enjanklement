@@ -5,14 +5,7 @@ from typing import List, Dict, Optional
 import requests
 
 def main():
-    outpath = '../website/media/jank.json'
-    if len(sys.argv) > 1:
-        if sys.argv[1] == '-h':
-            print('Usage: gen_db.py [output.json]')
-            print('   output.json: defaults to "../website/media/jank.json"')
-            sys.exit(0)
-
-        outpath = sys.argv[1]
+    outpath = '../website/media/jank_modified.json'
 
     # acquire this file from https://scryfall.com/docs/api/bulk-data
     if not os.path.exists('default-cards.json'):
@@ -33,13 +26,14 @@ def main():
         print('default-cards.json exists')
         cards = json.loads(open('default-cards.json', 'r').read())
 
+    jank_list_cards = json.load(open('../website/media/jank.json', 'r'))
+    jank_list_card_names = list(jank_list_cards.keys())
     cards_all: List[dict] = []
     cards_db: Dict[dict] = {}
 
-    banlist = json.load(open('../website/media/banlist.json', 'r'))['banlist']
-    print(banlist)
-
-    # First, just get every card we could possibly care about
+    # Try to find the lowest gatherer multiverse ID for a cards preview image
+    # and Scryfall link. This means you won't get some weird promo preview art
+    # for a card in the list website
     for card in cards:
         # filter cards that are banned in any format
         legalities: Dict[str, str] = card['legalities']
@@ -78,12 +72,13 @@ def main():
         # no gold borders:
         if card['border_color'] == 'gold':
             continue
-        # banlist
-        if card['name'] in banlist:
-            print(f'{card["name"]} banned')
+        if card['name'] not in jank_list_card_names:
             continue
 
-
+        if card.get('image_uris') is not None:
+            image_link = card['image_uris']['normal']
+        else:
+            image_link = card['card_faces'][0]['image_uris']['normal']
 
         # get key information
         new_card = {}
@@ -118,18 +113,11 @@ def main():
             rarity = 3
         new_card['points'] = rarity
 
-        if card.get('image_uris') is not None:
-            image_link = card['image_uris']['normal']
-        else:
-            image_link = card['card_faces'][0]['image_uris']['normal']
-
         new_card['uri'] = card['scryfall_uri']
         new_card['image'] = image_link
 
         # add this to the list, prices and rarity get sorted out later
         cards_all.append(new_card)
-
-
 
     # Then, create a unique dictionary of cards with lowest price, rarity, and all
     # possible sets
@@ -138,7 +126,8 @@ def main():
             cards_db[card['name']] = {
                 'points': card['points'],
                 'price': card['price'],
-                'sets': { card['set']: card['uri'] }
+                'uri': card['uri'],
+                'image': card['image']
             }
             continue
 
@@ -146,41 +135,26 @@ def main():
 
         if card['price'] < db_card['price']:
             db_card['price'] = card['price']
-            # Use the link/image from the cheapest version of a card
             db_card['uri'] = card['uri']
             db_card['image'] = card['image']
         if card['points'] < db_card['points']:
             db_card['points'] = card['points']
-        if card['set'] not in db_card['sets']:
-            db_card['sets'][card['set']] = card['uri']
 
-    # filter out cards that do not meet the price threshold (and sort by name)
-    names = sorted(list(cards_db.keys()))
+    for db_card in cards_db:
+        jank_list_cards[db_card]['image'] = cards_db[db_card]['image']
+        jank_list_cards[db_card]['uri'] = cards_db[db_card]['uri']
 
-    prices = []
-    for name in names:
-        card = cards_db[name]
-        prices.append(card['price'])
-    prices = sorted(prices)
-    bulk_ths = prices[int(len(prices)*0.67)]
-
-    print(f'Price threshold: {bulk_ths}')
-    if bulk_ths < 0.25:
-        bulk_ths = 0.25
-
-    for name in names:
-        card = cards_db[name]
-        price = card['price']
-
-        if price > bulk_ths:
-            cards_db.pop(name)
+    for jank_card in jank_list_cards:
+        if jank_list_cards[jank_card].get('image') is None:
+            print(f'NO IMAGE FOR CARD {jank_card}')
+        del jank_list_cards[jank_card]['sets']
 
     # output in slightly special way
     card_lines = []
-    names = sorted(list(cards_db.keys()))
+    names = sorted(jank_list_card_names)
     for name in names:
         name_esc = name.replace('"', '\\"')
-        card_lines.append(f'  "{name_esc}": ' + json.dumps(cards_db[name]))
+        card_lines.append(f'  "{name_esc}": ' + json.dumps(jank_list_cards[name]))
     fd = open(outpath, 'w')
     fd.write('{\n')
     fd.write(',\n'.join(card_lines))
