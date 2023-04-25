@@ -79,6 +79,14 @@ def main():
         if card['border_color'] == 'gold':
             continue
         # banlist
+        # dev note: banlist is not for cards that are considered
+        # overpowered per se, but rather for cards that don't fit
+        # the scope of being more friendly towards semi competetive
+        # 1v1 gameplay. The banlist includes cards that grant the monarch
+        # and the initiative, cards with weaknesses intended for 
+        # multiplayer or drafting, outdated color hose designs that are
+        # overly brutal to basic mana bases, and cards known to be able
+        # to initiate two card infinite loops, particularly at lower mana
         if card['name'] in banlist:
             print(f'{card["name"]} banned')
             continue
