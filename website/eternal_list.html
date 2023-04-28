@@ -167,7 +167,7 @@
     console.debug('Searching for', document.getElementById('name_search').value)
     var names = Object.keys(db);
     var search = fuzzysort.go(
-      document.getElementById('name_search').value,
+      document.getElementById('name_search').value.trim(),
       names,
       { limit: 200, threshold: -10000 }
     );
