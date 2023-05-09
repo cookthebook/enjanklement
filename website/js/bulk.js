@@ -157,7 +157,7 @@ class BulkSearch {
         ret.appendChild(card_points);
 
         if (this.gen_card_action !== null) {
-            ret.appendChild(this.gen_card_action(this.db[name]));
+            ret.appendChild(this.gen_card_action(name, this.db[name]));
         }
 
         return ret;
