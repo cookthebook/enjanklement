@@ -15,189 +15,19 @@
     on the list, but they are free to add to all decks, snow basics and Wastes included.
   </p>
 
-  <div id="loader">
-    <p>Loading cards...</p>
-    <div class="loading"></div>
-  </div>
   <div class="columns">
-    <div class="col-mx-auto">
-      <div class="form-group">
-        <label class="form-label">First Letter Filter</label>
-        <select class="form-select" id="letter_select" style="width: 5rem;">
-          <option value="a">A</option>
-          <option value="b">B</option>
-          <option value="c">C</option>
-          <option value="d">D</option>
-          <option value="e">E</option>
-          <option value="f">F</option>
-          <option value="g">G</option>
-          <option value="h">H</option>
-          <option value="i">I</option>
-          <option value="j">J</option>
-          <option value="k">K</option>
-          <option value="l">L</option>
-          <option value="m">M</option>
-          <option value="n">N</option>
-          <option value="o">O</option>
-          <option value="p">P</option>
-          <option value="q">Q</option>
-          <option value="r">R</option>
-          <option value="s">S</option>
-          <option value="t">T</option>
-          <option value="u">U</option>
-          <option value="v">V</option>
-          <option value="w">W</option>
-          <option value="x">X</option>
-          <option value="y">Y</option>
-          <option value="z">Z</option>
-        </select>
-        <label class="form-label">Card Name Search</label>
-        <div class="input-group" style="width: 15rem;">
-          <input class="form-input" id="name_search" type="text" placeholder="Drake Haven">
-          <button class="btn btn-primary" id="name_search_btn">Filter</button>
-        </div>
-      </div>
-
-      <table id="cardTable" class="table table-striped table-hover p-centered">
-        <thead>
-          <tr>
-            <th style="width: 25rem;">Name</th>
-            <th style="width: 5rem;">Points</th>
-          </tr>
-        </thead>
-        <tbody id="cards"></tbody>
-      </table>
+    <div class="col-mx-auto" id="bulk-search">
     </div>
   </div>
 </body>
 
 <script src="js/fuzzysort.js"></script>
 <script src="js/jank.js"></script>
+<script src="js/bulk.js"></script>
 <script>
-  let db = null;
-  const params = new URLSearchParams(window.location.search);
-  var page = 'a';
-
-  if (params.has('page')) {
-    page = params.get('page');
-  }
-
-  async function get_db() {
-    var db_resp = await fetch('media/jank.json');
-    var ret = await db_resp.json();
-    return ret;
-  }
-
-  function card_to_row(name, idx) {
-    var ret = document.createElement('tr');
-    ret.addEventListener('mouseenter', () => {
-      ret.classList.add('active');
-    });
-    ret.addEventListener('mouseleave', () => {
-      ret.classList.remove('active');
-    });
-
-    var card_container = document.createElement('td');
-    card_container.classList.add('popover');
-    card_container.classList.add('popover-right');
-    ret.appendChild(card_container);
-
-    var card_name = document.createElement('a');
-    card_name.has_image_hover = false;
-    card_container.appendChild(card_name);
-    card_name.innerText = name;
-    card_name.href = db[name].uri;
-    card_name.target = '_blank';
-    card_name.rel = 'noopener noreferrer';
-
-    card_name.addEventListener('mouseover', () => {
-      if (card_name.has_image_hover) {
-        return;
-      }
-
-      var card_popover = document.createElement('img');
-      card_container.appendChild(card_popover);
-      card_popover.classList.add('popover-container');
-      card_popover.style.width = '13rem';
-      card_popover.src = db[name].image;
-      card_name.has_image_hover = true;
-    });
-
-    var card_points = document.createElement('td');
-    card_points.innerText = db[name].points;
-    ret.appendChild(card_points);
-
-    var card_sets = document.createElement('td');
-    ret.appendChild(card_sets);
-
-    return ret;
-  }
-
-  function render_cards(names) {
-    var cards_tbody = document.getElementById('cards');
-
-    while (cards_tbody.childNodes.length > 0) {
-      cards_tbody.firstChild.remove();
-    }
-
-    names.forEach((name, idx) => {
-      cards_tbody.appendChild(card_to_row(name, idx));
-    });
-  }
-
-  function filter_by_letter() {
-    var names = Object.keys(db);
-    var letter = document.getElementById('letter_select').value;
-
-    console.debug('Filtering by', letter);
-
-    return names.filter(name => {
-      name = name.toLocaleLowerCase();
-      if (name[0] == letter) {
-        return true;
-      } else if (name[0] == '+' && letter == 'a') {
-        return true;
-      } else {
-        return false;
-      }
-    });
-  }
-
-  function filter_by_search() {
-    console.debug('Searching for', document.getElementById('name_search').value)
-    var names = Object.keys(db);
-    var search = fuzzysort.go(
-      document.getElementById('name_search').value.trim(),
-      names,
-      { limit: 200, threshold: -10000 }
-    );
-
-    return search.map(result => { return result.target; });
-  }
-
-  get_db().then(resp => {
-    db = resp;
-
-    if (document.getElementById('name_search').value.length > 0) {
-      render_cards(filter_by_search());
-    } else {
-      render_cards(filter_by_letter());
-    }
-
-    document.getElementById('loader').remove();
-  });
-
-  document.getElementById('letter_select').addEventListener('change', () => {
-    render_cards(filter_by_letter());
-  });
-
-  document.getElementById('name_search').addEventListener('input', (e) => {
-    render_cards(filter_by_search());
-  });
-
-  document.getElementById('name_search_btn').addEventListener('click', () => {
-    render_cards(filter_by_search());
-  });
+  var bulk_elem = document.getElementById('bulk-search');
+  var bulk_search = new BulkSearch(bulk_elem);
+  bulk_search.render();
 </script>
 
 </html>
