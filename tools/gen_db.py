@@ -48,7 +48,8 @@ def main():
             legalities['legacy'] == 'banned' or
             legalities['modern'] == 'banned' or
             legalities['pioneer'] == 'banned' or
-            legalities['pauper'] == 'banned'
+            legalities['pauper'] == 'banned' or
+            legalities['historic'] == 'banned'
         ):
             continue
         # only english cards
