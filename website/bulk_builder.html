@@ -8,18 +8,95 @@
 </head>
 
 <body class="container">
-  <h1>The BulkJank Deck Builder</h1>
-  <p>
-    Below is the entire list of all BulkJank legal cards along with their deck point value.
-    Begin construction of your deck and the stats will automatically update.
-  </p>
+  <div class="columns">
+    <div class="column col-1"></div>
+
+    <div class="column col-10">
+      <h1>The BulkJank Deck Builder</h1>
+      <p>
+        Below is the entire list of all BulkJank legal cards along with their deck point value.
+        Begin construction of your deck and the stats will automatically update.
+      </p>
+
+      <h2>Deck List</h2>
+
+      <div class="columns">
+        <div class="column col-4">
+          <table class="table">
+            <tbody>
+              <tr>
+                <th>Main Card Count</th><td id="MainCardCount">0</td>
+              </tr>
+              <tr>
+                <th>Main Points</th><td id="MainPoints">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="column col-4">
+          <table class="table">
+            <tbody>
+              <tr>
+                <th>Side Card Count</th><td id="SideCardCount">0</td>
+              </tr>
+              <tr>
+                <th>Side Points</th><td id="SidePoints">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="column col-4">
+          <table class="table">
+            <tbody>
+              <tr>
+                <th>Quad Count</th><td id="QuadCount">0</td>
+              </tr>
+              <tr>
+                <th>Trip Count</th><td id="TripPoints">0</td>
+              </tr>
+              <tr>
+                <th>Pair Count</th><td id="PairPoints">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <span class="label label-warning">Warnings</span>
+      <div id="Warnings">None :)</div>
+
+      <div class="divider"></div>
+
+      <div class="form-group">
+        <select class="form-select" id="BasicSelect" style="width: 10rem;">
+        </select>
+        <button class="btn btn-primary" id="BasicAddBtn">Add Basic</button>
+
+        <div class="divider"></div>
+
+        <label>Deck Import/Export</label>
+        <button class="btn btn-primary" id="ImportBtn">Import Deck</button>
+        <button class="btn btn-primary" id="ExportBtn">Export Deck</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div id="deck-list">
+      </div>
+    </div>
+
+    <div class="column col-1"></div>
+  </div>
+
+  <div class="divider"></div>
 
   <div class="columns">
     <div class="col-mx-auto">
-      <label>Deck List</label>
-      <div id="deck-list">
-      </div>
-      <label>Card Search</label>
+      <h2>Card Search</h2>
       <div id="bulk-search">
       </div>
     </div>
@@ -29,7 +106,22 @@
 <script src="js/fuzzysort.js"></script>
 <script src="js/jank.js"></script>
 <script src="js/bulk.js"></script>
+<script src="js/cod.js"></script>
 <script>
+  const basics = [
+    'Forest',
+    'Island',
+    'Mountain',
+    'Plains',
+    'Swamp',
+    'Snow-Covered Forest',
+    'Snow-Covered Island',
+    'Snow-Covered Mountain',
+    'Snow-Covered Plains',
+    'Snow-Covered Swamp',
+    'Wastes'
+  ];
+  /* setup the deck search */
   var deck = {};
   var deck_elem = document.getElementById('deck-list');
 
@@ -73,6 +165,26 @@
   var bulk_elem = document.getElementById('bulk-search');
   var bulk_search = new BulkSearch(bulk_elem, gen_card_action);
   bulk_search.render();
+
+
+
+  /* initialize GUI elements */
+  var basic_select = document.getElementById("BasicSelect");
+  basics.forEach(basic => {
+    var basic_opt = document.createElement('option');
+    basic_opt.value = basic;
+    basic_opt.innerText = basic;
+    basic_select.appendChild(basic_opt);
+  });
+
+  var basic_add_btn = document.getElementById("BasicAddBtn");
+  basic_add_btn.addEventListener('click', () => {
+    var card_data = {
+      points: 0
+    };
+    add_card_to_deck(basic_select.value, card_data);
+  });
+
 </script>
 
 </html>
