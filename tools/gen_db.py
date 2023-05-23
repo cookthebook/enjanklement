@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import datetime
 from typing import List, Dict, Optional
 import requests
 
@@ -189,6 +190,7 @@ def main():
     names = sorted(list(cards_db.keys()))
     for name in names:
         name_esc = name.replace('"', '\\"')
+        cards_db[name]["date"] = datetime.datetime.now().strftime("%Y-%m-%d")
         card_lines.append(f'  "{name_esc}": ' + json.dumps(cards_db[name]))
     fd = open(outpath, 'w')
     fd.write('{\n')
