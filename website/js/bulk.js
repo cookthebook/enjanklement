@@ -30,12 +30,14 @@ class BulkSearch {
             var letter_filter_label = document.createElement('label');
             letter_filter_label.classList.add('form-label');
             letter_filter_label.innerText = 'First Letter Filter';
-            search_group.appendChild(letter_filter_label);
+            //5-25-2023 Commenting out the first letter filter label
+            //search_group.appendChild(letter_filter_label);
 
             this.letter_filter = document.createElement('select')
             this.letter_filter.classList.add('form-select');
             this.letter_filter.style.width = '5rem';
-            search_group.appendChild(this.letter_filter);
+            //5-25-2023 Commenting out the first letter filter
+            //search_group.appendChild(this.letter_filter);
             this.letter_filter.addEventListener('change', () => {
                 this._render_cards(
                     this._filter_by_letter(this.letter_filter.value)
