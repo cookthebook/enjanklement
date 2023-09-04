@@ -174,15 +174,32 @@ def main():
     prices = sorted(prices)
     bulk_ths = prices[int(len(prices)*0.67)]
 
-    print(f'Price threshold: {bulk_ths}')
+    rare_prices = []
+    for name in names:
+        card = cards_db[name]
+        if(card['points'] == 2):
+            rare_prices.append(card['price'])
+    rare_prices = sorted(rare_prices)
+    rare_ths = rare_prices[int(len(rare_prices)*0.55)]
+
     if bulk_ths < 0.25:
         bulk_ths = 0.25
+
+    uncommon_ths = (rare_ths + bulk_ths) / 2
+
+    print(f'Price threshold: {bulk_ths}, rare thresh: {rare_ths}, unc ths: {uncommon_ths}')
 
     for name in names:
         card = cards_db[name]
         price = card['price']
 
-        if price > bulk_ths:
+        if card['points'] >= 2:
+            if (price > rare_ths):
+                cards_db.pop(name)
+        elif card['points'] == 1:
+            if (price > uncommon_ths):
+                cards_db.pop(name)
+        elif price > bulk_ths:
             cards_db.pop(name)
 
     # output in slightly special way
